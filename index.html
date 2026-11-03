@@ -2,13 +2,273 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TVB Hallenverkauf</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#c41222">
+<title>TVB Hallenverkauf</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#191919;background:#f5f5f7}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#b8091a;color:white;padding:22px 16px;text-align:center}
+header h1{font-size:23px;margin:0 0 5px}
+header p{margin:0;opacity:.85;font-size:13px}
+main{max-width:650px;margin:auto;padding:16px}
+section{background:white;border-radius:17px;padding:18px;margin-bottom:15px;box-shadow:0 2px 12px #00000008}
+h2{font-size:19px;margin:0 0 15px}
+label{font-size:14px;font-weight:600;display:block;margin-bottom:7px}
+input,select,textarea{font:inherit;border:1px solid #c9c9cf;border-radius:10px;padding:12px;color:#111;background:#fff;width:100%;min-width:0}
+input:focus,textarea:focus{outline:2px solid #c41222;outline-offset:1px}
+.field{margin:13px 0}
+.item{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #eee}
+.item:last-child{border-bottom:0}
+.item strong{font-size:14px;display:block}
+.item small{display:block;margin-top:4px;color:#626262;font-size:12px}
+.item input{text-align:center;font-size:19px;font-weight:600;color:#111!important;background:#fff!important}
+.total{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;padding:17px;background:#f4f4f5;border-radius:12px;margin-top:15px}
+.total b{font-size:20px;white-space:nowrap}
+.grand{background:#b8091a;color:white}
+button{font:inherit;border:0;border-radius:12px;padding:14px 17px;cursor:pointer;font-weight:650}
+.primary{background:#b8091a;color:#fff;width:100%;margin-top:9px}
+.secondary{background:#ececef;color:#181818}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.expense{display:grid;grid-template-columns:minmax(0,1fr) 110px 40px;gap:7px;margin:8px 0}
+.delete{background:#f5e6e7;color:#a30010;padding:8px}
+.note{font-size:12px;color:#666;line-height:1.5}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:15px}
+.check input{width:20px;height:20px;flex-shrink:0;accent-color:#b8091a}
+.check label{margin:2px 0;font-weight:400}
+.status{font-size:13px;color:#666;text-align:center;margin-top:12px}
+footer{text-align:center;font-size:12px;color:#777;padding:20px}
+@media print{
+body{background:white}
+header{color:black;background:white;border-bottom:3px solid #b8091a}
+main{max-width:none}
+section{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+button,.actions,.delete,footer,.status{display:none!important}
+input,textarea{border:0;padding:4px}
+.item input{font-size:14px}
+.total.grand{background:#eee;color:black}
+}
+</style>
 </head>
-<body style="font-family:Arial;text-align:center;padding:50px">
-  <h1>TVB Hallenverkauf</h1>
-  <p>Die Verbindung zu GitHub funktioniert.</p>
-  <p>Version 4.0 wird eingerichtet.</p>
+<body>
+<header>
+<h1>TVB Hallenverkauf</h1>
+<p>Turnverein Birkenfeld 1848 · Ausgabenabrechnung</p>
+</header>
+<main>
+<section>
+<h2>1. Hallendienst</h2>
+<div class="field"><label for="datum">Datum</label><input type="date" id="datum"></div>
+<div class="field"><label for="mannschaft">Mannschaft</label><input id="mannschaft" placeholder="z. B. Damen 1"></div>
+<div class="field"><label for="person">Verantwortliche Person</label><input id="person" placeholder="Vor- und Nachname"></div>
+</section>
+
+<section>
+<h2>2. Wareneinsatz Getränke</h2>
+<p class="note">Hier werden die Mengen für die Abrechnung mit dem Getränkelieferanten erfasst. Es handelt sich nicht um Verkaufseinnahmen.</p>
+<div id="waren"></div>
+<div class="total"><span>Wareneinsatz Getränke</span><b id="getraenkeSumme">0,00 €</b></div>
+</section>
+
+<section>
+<h2>3. Sonstige Ausgaben</h2>
+<p class="note">Zum Beispiel Würstchen, Brötchen, Brezeln oder weitere Einkäufe.</p>
+<div id="ausgaben"></div>
+<button class="secondary" onclick="addAusgabe()">+ Ausgabe hinzufügen</button>
+<div class="total"><span>Sonstige Ausgaben</span><b id="ausgabenSumme">0,00 €</b></div>
+<div class="check">
+<input type="checkbox" id="quittungen">
+<label for="quittungen">Ich bestätige, dass die Quittungen für die sonstigen Ausgaben in der Kasse liegen.</label>
+</div>
+</section>
+
+<section>
+<h2>4. Abschluss</h2>
+<div class="total"><span>Wareneinsatz Getränke</span><b id="sum1">0,00 €</b></div>
+<div class="total"><span>Sonstige Ausgaben</span><b id="sum2">0,00 €</b></div>
+<div class="total grand"><span>Gesamtausgaben</span><b id="gesamt">0,00 €</b></div>
+<div class="field"><label for="bemerkung">Bemerkungen</label><textarea id="bemerkung" rows="3" placeholder="Optional"></textarea></div>
+<div class="actions">
+<button class="primary" onclick="pdfErstellen()">Abrechnung als PDF erstellen</button>
+<button class="secondary" onclick="datenExport()">Daten sichern (JSON)</button>
+<button class="secondary" onclick="zuruecksetzen()">Neue Abrechnung</button>
+</div>
+<p class="status" id="status">Die Eingaben werden lokal auf diesem Gerät gespeichert.</p>
+<p class="note">Die direkte Übermittlung an Dropbox folgt nach Einrichtung der sicheren Cloudflare-Schnittstelle.</p>
+</section>
+</main>
+<footer>TV Birkenfeld 1848 · Hallenverkauf V4.0 Basis</footer>
+
+<script>
+const artikel=[
+["Bier/Radler/Alkoholfrei – 20er Kasten",16],
+["Bier/Radler/Alkoholfrei – 24er Kasten",20],
+["Bier/Radler/Alkoholfrei – Flasche",.80],
+["Cola – 24er Kasten",18],
+["Cola – Flasche",.80],
+["Hochwald Limo/Apfelschorle – 20er Kasten",21],
+["Hochwald Limo/Apfelschorle – Flasche 0,5 l",1.10],
+["Hochwald Sprudel – 20er Kasten",16],
+["Hochwald Sprudel – Flasche 0,5 l",.80],
+["ISO Sport – 20er Kasten",18],
+["ISO Sport – Flasche",.90],
+["Sekt – Flasche",6],
+["Hanuta/Duplo – Stück",.40],
+["Chips – Packung",1],
+["Pfand – Flasche",.25]
+];
+const euro=n=>Number(n||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
+const $=id=>document.getElementById(id);
+const key="tvb_hallenverkauf_v4_basis";
+let mengen=Array(artikel.length).fill(0);
+let ausgaben=[];
+let saveTimer;
+
+function renderWaren(){
+$("waren").innerHTML=artikel.map((a,i)=>`
+<div class="item">
+<div><strong>${a[0]}</strong><small>Lieferantenpreis: ${euro(a[1])}</small></div>
+<input type="number" min="0" step="1" inputmode="numeric" aria-label="Anzahl ${a[0]}" value="${mengen[i]||""}" data-index="${i}" class="menge">
+</div>`).join("");
+document.querySelectorAll(".menge").forEach(el=>{
+el.addEventListener("input",()=>{
+const value=Number(el.value);
+mengen[Number(el.dataset.index)]=Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
+berechnen();
+});
+});
+}
+function renderAusgaben(){
+const root=$("ausgaben");
+root.replaceChildren();
+ausgaben.forEach((a,i)=>{
+const row=document.createElement("div");
+row.className="expense";
+const desc=document.createElement("input");
+desc.placeholder="Bezeichnung";
+desc.value=a.text||"";
+desc.setAttribute("aria-label","Ausgabe Bezeichnung");
+desc.addEventListener("input",()=>{ausgaben[i].text=desc.value;speichern();});
+const betrag=document.createElement("input");
+betrag.type="number";betrag.min="0";betrag.step="0.01";betrag.inputMode="decimal";
+betrag.placeholder="Euro";betrag.value=a.betrag||"";
+betrag.setAttribute("aria-label","Ausgabenbetrag in Euro");
+betrag.addEventListener("input",()=>{
+ausgaben[i].betrag=Math.max(0,Number(betrag.value)||0);
+berechnen();
+});
+const del=document.createElement("button");
+del.className="delete";del.textContent="×";del.title="Ausgabe entfernen";
+del.onclick=()=>{ausgaben.splice(i,1);renderAusgaben();berechnen();};
+row.append(desc,betrag,del);
+root.append(row);
+});
+}
+function addAusgabe(){
+ausgaben.push({text:"",betrag:0});
+renderAusgaben();berechnen();
+}
+function berechnen(){
+const getraenke=artikel.reduce((s,a,i)=>s+a[1]*(mengen[i]||0),0);
+const sonstige=ausgaben.reduce((s,a)=>s+(Number(a.betrag)||0),0);
+$("getraenkeSumme").textContent=euro(getraenke);
+$("ausgabenSumme").textContent=euro(sonstige);
+$("sum1").textContent=euro(getraenke);
+$("sum2").textContent=euro(sonstige);
+$("gesamt").textContent=euro(getraenke+sonstige);
+speichern();
+return {getraenke,sonstige,gesamt:getraenke+sonstige};
+}
+function daten(){
+return {
+version:"4.0-basis",
+datum:$("datum").value,
+mannschaft:$("mannschaft").value,
+person:$("person").value,
+waren:artikel.map((a,i)=>({
+bezeichnung:a[0],anzahl:mengen[i]||0,
+einzelpreis:a[1],summe:a[1]*(mengen[i]||0)
+})),
+ausgaben:ausgaben.map(a=>({...a})),
+quittungen:$("quittungen").checked,
+bemerkung:$("bemerkung").value,
+summen:berechneteSummen()
+};
+}
+function berechneteSummen(){
+const getraenke=artikel.reduce((s,a,i)=>s+a[1]*(mengen[i]||0),0);
+const sonstige=ausgaben.reduce((s,a)=>s+(Number(a.betrag)||0),0);
+return {getraenke,sonstige,gesamt:getraenke+sonstige};
+}
+function speichern(){
+clearTimeout(saveTimer);
+saveTimer=setTimeout(()=>{
+try{localStorage.setItem(key,JSON.stringify(daten()));}catch(e){}
+},200);
+}
+function laden(){
+try{
+const d=JSON.parse(localStorage.getItem(key)||"null");
+if(!d)return;
+$("datum").value=d.datum||"";
+$("mannschaft").value=d.mannschaft||"";
+$("person").value=d.person||"";
+$("quittungen").checked=!!d.quittungen;
+$("bemerkung").value=d.bemerkung||"";
+if(Array.isArray(d.waren))mengen=artikel.map((_,i)=>Math.max(0,Math.floor(Number(d.waren[i]?.anzahl)||0)));
+if(Array.isArray(d.ausgaben))ausgaben=d.ausgaben;
+}catch(e){}
+}
+function validieren(){
+if(!$("datum").value||!$("mannschaft").value.trim()||!$("person").value.trim()){
+alert("Bitte zuerst Datum, Mannschaft und verantwortliche Person ausfüllen.");
+return false;
+}
+if(ausgaben.some(a=>Number(a.betrag)>0&&!String(a.text).trim())){
+alert("Bitte alle sonstigen Ausgaben mit einer Bezeichnung versehen.");
+return false;
+}
+if(ausgaben.some(a=>Number(a.betrag)>0)&&!$("quittungen").checked){
+alert("Bitte bestätigen, dass die Quittungen in der Kasse liegen.");
+return false;
+}
+return true;
+}
+function pdfErstellen(){
+if(!validieren())return;
+window.print();
+}
+function datenExport(){
+if(!validieren())return;
+const d=daten();
+const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+a.href=url;
+a.download=`TVB_${d.datum}_${d.mannschaft.replace(/[^a-z0-9_-]/gi,"_")}.json`;
+a.click();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function zuruecksetzen(){
+if(!confirm("Alle Eingaben löschen und eine neue Abrechnung beginnen?"))return;
+localStorage.removeItem(key);
+mengen=Array(artikel.length).fill(0);
+ausgaben=[];
+$("datum").value=new Date().toLocaleDateString("en-CA");
+$("mannschaft").value="";
+$("person").value="";
+$("quittungen").checked=false;
+$("bemerkung").value="";
+renderWaren();renderAusgaben();berechnen();
+}
+["datum","mannschaft","person","quittungen","bemerkung"].forEach(id=>{
+$(id).addEventListener("input",speichern);
+$(id).addEventListener("change",speichern);
+});
+$("datum").value=new Date().toLocaleDateString("en-CA");
+laden();renderWaren();renderAusgaben();berechnen();
+</script>
 </body>
 </html>
