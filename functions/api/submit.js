@@ -1,254 +1,61 @@
-
-const PREISE = [
-  16, 20, 0.80, 18, 0.80,
-  21, 1.10, 16, 0.80, 18,
-  0.90, 6, 0.40, 1, 0.25
-];
-
-const ANTWORT = {
-  "Content-Type": "application/json; charset=utf-8",
-  "Cache-Control": "no-store",
-  "X-Content-Type-Options": "nosniff"
-};
-
-function antwort(daten, status = 200) {
-  return new Response(JSON.stringify(daten), {
-    status,
-    headers: ANTWORT
-  });
-}
-
-function cent(wert) {
-  return Math.round(Number(wert) * 100);
-}
-
-function sichererName(wert) {
-  return String(wert)
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9_-]/g, "_")
-    .slice(0, 45);
-}
-
-async function accessToken(env) {
-  const basic = btoa(
-    env.DROPBOX_APP_KEY + ":" + env.DROPBOX_APP_SECRET
-  );
-
-  const res = await fetch(
-    "https://api.dropboxapi.com/oauth2/token",
-    {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + basic,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: env.DROPBOX_REFRESH_TOKEN
-      })
-    }
-  );
-
-  if (!res.ok) throw Error("Dropbox-Autorisierung");
-  const data = await res.json();
-  return data.access_token;
-}
-
-async function ordnerAnlegen(token, path) {
-  const res = await fetch(
-    "https://api.dropboxapi.com/2/files/create_folder_v2",
-    {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        path,
-        autorename: false
-      })
-    }
-  );
-
-  if (res.ok) return;
-
-  if (res.status === 409) {
-    const data = await res.json();
-    if (data.error?.[".tag"] === "path" &&
-        data.error?.path?.[".tag"] === "conflict") {
-      return;
-    }
-  }
-
-  throw Error("Dropbox-Ordner");
-}
-
-async function dateiHochladen(token, path, inhalt) {
-  const res = await fetch(
-    "https://content.dropboxapi.com/2/files/upload",
-    {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/octet-stream",
-        "Dropbox-API-Arg": JSON.stringify({
-          path,
-          mode: "add",
-          autorename: false,
-          mute: true
-        })
-      },
-      body: new TextEncoder().encode(inhalt)
-    }
-  );
-
-  if (res.ok) return "gespeichert";
-
-  if (res.status === 409) {
-    const data = await res.json();
-    if (data.error?.[".tag"] === "path" &&
-        data.error?.path?.[".tag"] === "conflict") {
-      return "bereits vorhanden";
-    }
-  }
-
-  throw Error("Dropbox-Upload");
-}
-
-export async function onRequestPost({ request, env }) {
+import {validieren, PublicError} from '../../lib/abrechnung.js';
+import {Dropbox} from '../../lib/dropbox.js';
+import {createPdf} from '../../lib/pdf.js';
+const headers = {'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff'};
+const reply = (data, status=200) => new Response(JSON.stringify(data), {status,headers});
+async function readInput(request) {
+  // Tatsächliche Bytes begrenzen, unabhängig vom Content-Length-Header.
+  const reader = request.body?.getReader();
+  if (!reader) throw new PublicError('Leere Abrechnung.');
+  let size=0; const chunks=[];
   try {
-    const origin = request.headers.get("Origin");
-    const eigeneOrigin =
-      new URL(request.url).origin;
-
-    if (origin !== eigeneOrigin) {
-      return antwort({ ok: false, error: "Ursprung" }, 403);
+    for (;;) {
+      const {value, done} = await reader.read(); if(done) break;
+      size += value.length;
+      if(size > 50000) { await reader.cancel(); throw new PublicError('Abrechnung zu groß.',413); }
+      chunks.push(value);
     }
-
-    if (!request.headers.get("Content-Type")
-        ?.includes("application/json")) {
-      return antwort({ ok: false, error: "Format" }, 415);
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(size); let offset=0;
+  for(const chunk of chunks) {bytes.set(chunk,offset); offset += chunk.length;}
+  try {return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
+  catch {throw new PublicError('Ungültiges JSON.');}
+}
+async function sameSecret(actual, expected) {
+  if(typeof actual !== 'string') return false;
+  const encode = value => new TextEncoder().encode(value);
+  const a = new Uint8Array(await crypto.subtle.digest('SHA-256',encode(actual)));
+  const b = new Uint8Array(await crypto.subtle.digest('SHA-256',encode(expected)));
+  let diff=0; for(let i=0; i<a.length; i++) diff |= a[i]^b[i];
+  return diff === 0;
+}
+export async function onRequestPost({request,env}) {
+  try {
+    if(request.headers.get('Origin') !== new URL(request.url).origin) throw new PublicError('Zugriff verweigert.',403);
+    if(request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') throw new PublicError('JSON erforderlich.',415);
+    if(!env.TVB_VEREINSCODE || !env.DROPBOX_APP_KEY || !env.DROPBOX_APP_SECRET || !env.DROPBOX_REFRESH_TOKEN || !env.ASSETS) {
+      throw new PublicError('Serverkonfiguration muss vom Kassenwart geprüft werden.',503);
     }
-
-    const roh = await request.text();
-
-    if (roh.length > 50000) {
-      return antwort({ ok: false, error: "Datei zu gross" }, 413);
-    }
-
-    const eingabe = JSON.parse(roh);
-
-    if (!env.TVB_VEREINSCODE ||
-        !env.DROPBOX_REFRESH_TOKEN ||
-        eingabe.vereinscode !== env.TVB_VEREINSCODE) {
-      return antwort({
-        ok: false, error: "Vereinscode ungueltig"
-      }, 403);
-    }
-
-    const d = eingabe.abrechnung;
-    const id = String(eingabe.id || "");
-
-    if (!/^[a-f0-9-]{36}$/.test(id) ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(d?.datum || "") ||
-        !Number.isFinite(Date.parse(d.datum)) ||
-        !String(d.mannschaft || "").trim() ||
-        !String(d.person || "").trim() ||
-        String(d.mannschaft).length > 120 ||
-        String(d.person).length > 120 ||
-        String(d.bemerkung || "").length > 2000 ||
-        !Array.isArray(d.waren) ||
-        d.waren.length !== PREISE.length ||
-        !Array.isArray(d.ausgaben) ||
-        d.ausgaben.length > 50) {
-      return antwort({
-        ok: false, error: "Ungueltige Abrechnung"
-      }, 400);
-    }
-
-    let getraenkeCent = 0;
-
-    for (let i = 0; i < PREISE.length; i++) {
-      const anzahl = Number(d.waren[i].anzahl);
-
-      if (!Number.isInteger(anzahl) ||
-          anzahl < 0 || anzahl > 10000) {
-        return antwort({
-          ok: false, error: "Ungueltige Menge"
-        }, 400);
-      }
-
-      getraenkeCent += anzahl * cent(PREISE[i]);
-    }
-
-    let sonstigeCent = 0;
-
-    for (const ausgabe of d.ausgaben) {
-      const wert = Number(ausgabe.betrag);
-
-      if (!Number.isFinite(wert) ||
-          wert < 0 || wert > 100000 ||
-          Math.abs(wert * 100 - cent(wert)) > 0.001 ||
-          String(ausgabe.text || "").length > 200 ||
-          (wert > 0 && !String(ausgabe.text || "").trim())) {
-        return antwort({
-          ok: false, error: "Ungueltige Ausgabe"
-        }, 400);
-      }
-
-      sonstigeCent += cent(wert);
-    }
-
-    if (sonstigeCent > 0 && d.quittungen !== true) {
-      return antwort({
-        ok: false, error: "Quittungen nicht bestaetigt"
-      }, 400);
-    }
-
-    const daten = {
-      ...d,
-      id,
-      summen: {
-        getraenke: getraenkeCent / 100,
-        sonstige: sonstigeCent / 100,
-        gesamt: (getraenkeCent + sonstigeCent) / 100
-      },
-      eingegangenAm: new Date().toISOString()
-    };
-
-    const token = await accessToken(env);
-    const jahr = d.datum.slice(0, 4);
-
-    await ordnerAnlegen(token, "/Abrechnungen");
-    await ordnerAnlegen(token, "/Abrechnungen/" + jahr);
-
-    const name =
-      d.datum + "_" +
-      sichererName(d.mannschaft) + "_" +
-      id + ".json";
-
-    const ziel = "/Abrechnungen/" + jahr + "/" + name;
-
-    const ergebnis = await dateiHochladen(
-      token,
-      ziel,
-      JSON.stringify(daten, null, 2)
-    );
-
-    return antwort({
-      ok: true,
-      id,
-      datei: name,
-      status: ergebnis
-    });
-
-  } catch (e) {
-    console.error("TVB Upload:", e.message);
-
-    return antwort({
-      ok: false,
-      error: "Uebermittlung fehlgeschlagen"
-    }, 500);
+    const input = await readInput(request);
+    if(!await sameSecret(input?.vereinscode,env.TVB_VEREINSCODE)) throw new PublicError('Vereinscode ungültig.',403);
+    const data = validieren(input);
+    const fontResponse = await env.ASSETS.fetch(new URL('/assets/fonts/NotoSans.deflate',request.url));
+    if(!fontResponse.ok) throw new Error('font');
+    // Vor dem ersten Dropbox-Schreibvorgang auf vollständig erzeugbares PDF prüfen.
+    const pdf = await createPdf(data,await fontResponse.arrayBuffer());
+    const json = new TextEncoder().encode(JSON.stringify(data,null,2));
+    const dropbox = new Dropbox(env);
+    await dropbox.connect();
+    await dropbox.folder('/Abrechnungen');
+    await dropbox.folder('/Abrechnungen/V4_1');
+    // Globale ID statt Datum/Mannschaft im Pfad: geänderte Daten unter gleicher ID kollidieren.
+    const path = '/Abrechnungen/V4_1/' + data.id;
+    const jsonFile = await dropbox.file(path + '.json',json);
+    const pdfFile = await dropbox.file(path + '.pdf',pdf);
+    return reply({ok:true, version:'4.1', id:data.id, status:'vollständig', dateien:{json:jsonFile,pdf:pdfFile}});
+  } catch(error) {
+    // Keine Zugangsdaten, Nutzdaten oder Dropbox-Antworten in Logs/Fehlermeldungen.
+    if(error instanceof PublicError) return reply({ok:false,error:error.message},error.status);
+    return reply({ok:false,error:'Übermittlung nicht bestätigt. Bitte dieselbe Abrechnung erneut übermitteln.'},503);
   }
 }

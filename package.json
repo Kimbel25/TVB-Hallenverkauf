@@ -1,0 +1,13 @@
+{
+  "name": "tvb-hallenverkauf",
+  "version": "4.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/submission.test.js",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

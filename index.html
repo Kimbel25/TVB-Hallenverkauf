@@ -91,12 +91,12 @@ input,textarea{border:0;padding:4px}
 <div class="total grand"><span>Gesamtausgaben</span><b id="gesamt">0,00 €</b></div>
 <div class="field"><label for="bemerkung">Bemerkungen</label><textarea id="bemerkung" rows="3" placeholder="Optional"></textarea></div>
 <div class="actions">
-<button class="primary" onclick="pdfErstellen()">Abrechnung als PDF erstellen</button>
+<button class="primary" onclick="pdfErstellen()">Druckvorschau / lokale PDF</button>
 <button class="secondary" onclick="datenExport()">Daten sichern (JSON)</button>
 <button class="secondary" onclick="zuruecksetzen()">Neue Abrechnung</button>
 </div>
 <p class="status" id="status">Die Eingaben werden lokal auf diesem Gerät gespeichert.</p>
-<p class="note">Die direkte Übermittlung an Dropbox folgt nach Einrichtung der sicheren Cloudflare-Schnittstelle.</p>
+<p class="note">Bei der Übermittlung werden PDF und JSON automatisch erstellt und in Dropbox gespeichert. Die Druckfunktion dient als lokale Vorschau.</p>
 </section>
 
 
@@ -131,7 +131,7 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>TV Birkenfeld 1848 · Hallenverkauf V4.0 Basis</footer>
+<footer>TV Birkenfeld 1848 · Hallenverkauf V4.1</footer>
 
 <script>
 const artikel=[
@@ -157,6 +157,9 @@ const key="tvb_hallenverkauf_v4_basis";
 let mengen=Array(artikel.length).fill(0);
 let ausgaben=[];
 let saveTimer;
+const sendKey="tvb_submission_v41";
+let sending=false;
+let storedSubmission=null;
 
 function renderWaren(){
 $("waren").innerHTML=artikel.map((a,i)=>`
@@ -215,7 +218,7 @@ return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
 function daten(){
 return {
-version:"4.0-basis",
+version:"4.1",
 datum:$("datum").value,
 mannschaft:$("mannschaft").value,
 person:$("person").value,
@@ -284,7 +287,19 @@ a.click();
 setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function zuruecksetzen(){
+if(sending || (storedSubmission && storedSubmission.state!=="sent")){
+alert("Die Übermittlung ist noch offen. Bitte mit derselben Vorgangsnummer erneut senden oder den Kassenwart kontaktieren.");return;
+}
+
 if(!confirm("Alle Eingaben löschen und eine neue Abrechnung beginnen?"))return;
+clearTimeout(saveTimer);
+localStorage.removeItem(sendKey);
+localStorage.removeItem("tvb_pending_submission_id");
+storedSubmission=null;
+lockForm(false);
+$("sendenButton").disabled=false;
+$("sendenButton").textContent="Abrechnung an Kassenwart übermitteln";
+$("sendeStatus").textContent="Noch nicht übermittelt";
 localStorage.removeItem(key);
 mengen=Array(artikel.length).fill(0);
 ausgaben=[];
@@ -303,73 +318,97 @@ $("datum").value=new Date().toLocaleDateString("en-CA");
 laden();renderWaren();renderAusgaben();berechnen();
 
 
+function lockForm(locked) {
+  document.querySelectorAll("main input,main textarea,main button").forEach(el=>{
+    if(el.id==="vereinscode" || el.id==="sendenButton" ||
+       ["pdfErstellen()","datenExport()","zuruecksetzen()"].includes(el.getAttribute("onclick"))) return;
+    el.disabled=locked;
+  });
+}
+function restoreSubmission(record) {
+  storedSubmission=record;
+  localStorage.setItem(key,JSON.stringify(record.abrechnung));
+  laden(); renderWaren(); renderAusgaben(); berechnen(); lockForm(true);
+  $("sendenButton").disabled=record.state==="sent";
+  $("sendenButton").textContent=record.state==="sent" ? "Erfolgreich übermittelt" : "Dieselbe Abrechnung erneut übermitteln";
+  $("sendeStatus").textContent=(record.state==="sent" ? "PDF und JSON bestätigt. Vorgang: " : "Übermittlung offen. Vorgang: ")+record.id;
+}
+try {
+  const record=JSON.parse(localStorage.getItem(sendKey)||"null");
+  if(record) restoreSubmission(record);
+} catch {
+  $("sendenButton").disabled=true;
+  $("sendeStatus").textContent="Lokaler Speicher nicht lesbar. Bitte den Kassenwart kontaktieren, damit keine doppelte Abrechnung entsteht.";
+}
+// Ein zweiter Tab darf eine bereits gestartete Abrechnung nicht unabhängig versenden.
+window.addEventListener("storage", event=>{
+  if(event.key===sendKey) {
+    if(event.newValue) {try {restoreSubmission(JSON.parse(event.newValue));} catch {$("sendenButton").disabled=true;}}
+    else location.reload();
+  }
+});
 async function abrechnungSenden() {
-  if (!validieren()) return;
-
-  const code = $("vereinscode").value.trim();
-
-  if (!code) {
-    alert("Bitte den Vereinscode eingeben.");
-    return;
+  if(sending) return;
+  if(!navigator.locks) {
+    $("sendeStatus").textContent="Bitte einen aktuellen Browser verwenden, damit parallele Übermittlungen sicher verhindert werden.";return;
   }
-
-  const button = $("sendenButton");
-  const status = $("sendeStatus");
-
-  button.disabled = true;
-  button.textContent = "Wird übermittelt ...";
-  status.textContent = "Verbindung mit Dropbox ...";
-
-  const idKey = "tvb_pending_submission_id";
-
-  let id = localStorage.getItem(idKey);
-
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(idKey, id);
-  }
-
+  sending=true;
   try {
-    const response = await fetch("/api/submit", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        id,
-        vereinscode: code,
-        abrechnung: daten()
-      })
+    await navigator.locks.request("tvb-abrechnung-uebermitteln",{ifAvailable:true},async lock=>{
+      if(!lock) {$("sendeStatus").textContent="In einem anderen Tab wird gerade übermittelt. Bitte dort fortfahren.";return;}
+      await sendSubmission();
     });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.ok) {
-      throw new Error(
-        result.error || "Serverfehler"
-      );
+  } finally {sending=false;}
+}
+async function sendSubmission() {
+  const button=$("sendenButton"), status=$("sendeStatus");
+  let record;
+  try {
+    record=JSON.parse(localStorage.getItem(sendKey)||"null");
+    if(record?.state==="sent") {restoreSubmission(record);return;}
+    if(!record && localStorage.getItem("tvb_pending_submission_id")) {
+      status.textContent="Es gibt einen offenen Vorgang aus Version 4.0. Bitte zuerst vom Kassenwart prüfen lassen, ob die JSON bereits eingegangen ist.";return;
     }
-
-    localStorage.removeItem(idKey);
-
-    status.textContent =
-      "Erfolgreich übermittelt. " +
-      "Vorgang: " + result.id;
-
-    button.textContent = "Erfolgreich übermittelt";
-
-    alert(
-      "Die Abrechnung wurde in Dropbox gespeichert."
-    );
-
-  } catch (error) {
-    status.textContent =
-      "Übermittlung fehlgeschlagen: " +
-      error.message;
-
-    button.disabled = false;
-    button.textContent =
-      "Erneut übermitteln";
+    if(!record && !validieren()) return;
+    const code=$("vereinscode").value.trim();
+    if(!code) {alert("Bitte den Vereinscode eingeben.");return;}
+    if(!record) record={id:crypto.randomUUID(),abrechnung:daten(),state:"pending",attempts:0};
+    record.attempts=(record.attempts||0)+1;
+    // Vor jedem Netzwerkzugriff sichern; bei Speicherfehler wird nichts gesendet.
+    localStorage.setItem(sendKey,JSON.stringify(record));
+    restoreSubmission(record);
+    button.disabled=true; button.textContent="Wird übermittelt …";
+    status.textContent="PDF wird erstellt. PDF und JSON werden in Dropbox geprüft …";
+    let response;
+    try {
+      response=await fetch("/api/submit",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id:record.id,vereinscode:code,abrechnung:record.abrechnung}),
+        signal:AbortSignal.timeout(120000)
+      });
+      const result=await response.json();
+      if(!response.ok || !result.ok) {
+        // Ein erster Validierungsfehler entsteht vor allen Dropbox-Schreibvorgängen.
+        if(response.status===400 && record.attempts===1) {
+          localStorage.removeItem(sendKey); storedSubmission=null; lockForm(false);
+        }
+        throw Error(result.error||"Übermittlung nicht bestätigt.");
+      }
+      if(result.id!==record.id || result.version!=="4.1" || result.status!=="vollständig" ||
+         !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
+      record.state="sent"; record.receipt=result;
+      localStorage.setItem(sendKey,JSON.stringify(record));
+      restoreSubmission(record);
+      $("vereinscode").value="";
+      status.textContent="PDF und JSON erfolgreich in Dropbox bestätigt. Vorgang: "+record.id;
+    } catch(error) {
+      status.textContent="Nicht als erfolgreich bestätigt: "+error.message+
+        (storedSubmission ? " Bitte dieselbe Abrechnung erneut übermitteln. Vorgang: "+record.id : " Bitte Eingaben korrigieren.");
+      button.disabled=false; button.textContent="Erneut übermitteln";
+    }
+  } catch {
+    status.textContent="Übermittlung angehalten: Der lokale Vorgang konnte nicht sicher gespeichert oder gelesen werden. Bitte den Kassenwart kontaktieren.";
+    button.disabled=false;
   }
 }
 </script>
