@@ -11,6 +11,7 @@
 *{box-sizing:border-box}
 body{margin:0}
 header{background:#b8091a;color:white;padding:22px 16px;text-align:center}
+.wappen{display:block;width:90px;height:auto;margin:0 auto 12px}
 header h1{font-size:23px;margin:0 0 5px}
 header p{margin:0;opacity:.85;font-size:13px}
 main{max-width:650px;margin:auto;padding:16px}
@@ -54,6 +55,7 @@ input,textarea{border:0;padding:4px}
 </head>
 <body>
 <header>
+<img class="wappen" src="/assets/tvb-wappen.svg" alt="Wappen des Turnverein Birkenfeld 1848" width="90" height="90">
 <h1>TVB Hallenverkauf</h1>
 <p>Turnverein Birkenfeld 1848 · Ausgabenabrechnung</p>
 </header>
@@ -74,7 +76,12 @@ input,textarea{border:0;padding:4px}
 
 <section>
 <h2>3. Sonstige Ausgaben</h2>
-<p class="note">Zum Beispiel Würstchen, Brötchen, Brezeln oder weitere Einkäufe.</p>
+<p class="note">Bezeichnung aus den Vorschlägen auswählen oder einen eigenen Text eingeben.</p>
+<datalist id="ausgabenVorschlaege">
+<option value="Würstchenbrötchen"></option>
+<option value="Brezeln"></option>
+<option value="Schnitzel"></option>
+</datalist>
 <div id="ausgaben"></div>
 <button class="secondary" onclick="addAusgabe()">+ Ausgabe hinzufügen</button>
 <div class="total"><span>Sonstige Ausgaben</span><b id="ausgabenSumme">0,00 €</b></div>
@@ -92,7 +99,6 @@ input,textarea{border:0;padding:4px}
 <div class="field"><label for="bemerkung">Bemerkungen</label><textarea id="bemerkung" rows="3" placeholder="Optional"></textarea></div>
 <div class="actions">
 <button class="primary" onclick="pdfErstellen()">Druckvorschau / lokale PDF</button>
-<button class="secondary" onclick="datenExport()">Daten sichern (JSON)</button>
 <button class="secondary" onclick="zuruecksetzen()">Neue Abrechnung</button>
 </div>
 <p class="status" id="status">Die Eingaben werden lokal auf diesem Gerät gespeichert.</p>
@@ -149,7 +155,8 @@ const artikel=[
 ["Sekt – Flasche",6],
 ["Hanuta/Duplo – Stück",.40],
 ["Chips – Packung",1],
-["Pfand – Flasche",.25]
+["Pfand – Flasche",.25],
+["Hugo / Aperol / Spritz – Dose",1]
 ];
 const euro=n=>Number(n||0).toLocaleString("de-DE",{style:"currency",currency:"EUR"});
 const $=id=>document.getElementById(id);
@@ -182,7 +189,8 @@ ausgaben.forEach((a,i)=>{
 const row=document.createElement("div");
 row.className="expense";
 const desc=document.createElement("input");
-desc.placeholder="Bezeichnung";
+desc.placeholder="Auswählen oder eigene Bezeichnung";
+desc.setAttribute("list","ausgabenVorschlaege");
 desc.value=a.text||"";
 desc.setAttribute("aria-label","Ausgabe Bezeichnung");
 desc.addEventListener("input",()=>{ausgaben[i].text=desc.value;speichern();});
@@ -275,17 +283,6 @@ function pdfErstellen(){
 if(!validieren())return;
 window.print();
 }
-function datenExport(){
-if(!validieren())return;
-const d=daten();
-const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download=`TVB_${d.datum}_${d.mannschaft.replace(/[^a-z0-9_-]/gi,"_")}.json`;
-a.click();
-setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
 function zuruecksetzen(){
 if(sending || (storedSubmission && storedSubmission.state!=="sent")){
 alert("Die Übermittlung ist noch offen. Bitte mit derselben Vorgangsnummer erneut senden oder den Kassenwart kontaktieren.");return;
@@ -321,7 +318,7 @@ laden();renderWaren();renderAusgaben();berechnen();
 function lockForm(locked) {
   document.querySelectorAll("main input,main textarea,main button").forEach(el=>{
     if(el.id==="vereinscode" || el.id==="sendenButton" ||
-       ["pdfErstellen()","datenExport()","zuruecksetzen()"].includes(el.getAttribute("onclick"))) return;
+       ["pdfErstellen()","zuruecksetzen()"].includes(el.getAttribute("onclick"))) return;
     el.disabled=locked;
   });
 }

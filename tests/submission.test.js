@@ -125,3 +125,15 @@ test('missing/corrupt font cannot produce a confirmed submission',async()=>withD
   assert.equal((await send(fixture(),{env:{ASSETS:{fetch:async()=>new Response('<html>fallback</html>')}}})).status,503);
   assert.equal(fake.files.size,0);
 }));
+test('new cans use supplier price of 1 euro and existing 15-item records remain valid',()=>{
+  const input=fixture();input.abrechnung.waren[15]={anzahl:3,einzelpreis:999};
+  const data=validieren(input);
+  assert.equal(data.waren[15].bezeichnung,'Hugo / Aperol / Spritz – Dose');
+  assert.equal(data.waren[15].einzelpreis,1);assert.equal(data.summen.gesamt,58.45);
+  input.abrechnung.waren=input.abrechnung.waren.slice(0,15);
+  const legacy=validieren(input);assert.equal(legacy.waren.length,15);assert.equal(legacy.summen.gesamt,55.45);
+});
+test('network function receives no Dropbox instance as receiver',async()=>{
+  const db=new Dropbox({}, {fetcher:async function(){assert.equal(this,undefined);return Response.json({});}});
+  assert.equal((await db.request('test',{})).status,200);
+});

@@ -1,9 +1,33 @@
 # TVB Hallenverkauf 4.1
 
-Ausgabenabrechnung für den Turnverein Birkenfeld 1848. Die bisherigen Artikel,
-Preise, sonstigen Ausgaben, Belegbestätigung und Farben bleiben erhalten.
+Ausgabenabrechnung für den Turnverein Birkenfeld 1848. Die bisherigen Preise, Ausgaben, Belegbestätigung und Farben bleiben erhalten.
+Zusätzlich: Hugo / Aperol / Spritz als Dose zu 1,00 €, Ausgabevorschläge für
+Würstchenbrötchen, Brezeln und Schnitzel sowie das Vereinswappen in App und PDF.
+Die App verwendet das Original-SVG. Im PDF bleibt der Außenbereich des Wappens
+durch eine separate Alpha-Maske transparent; die weiße Fläche im Kreis bleibt erhalten.
+Der manuelle JSON-Export entfällt; die automatische Dropbox-JSON bleibt bestehen.
 
-## Manuell veröffentlichen
+## Ergänzung auf einer bereits funktionierenden Version 4.1 installieren
+
+Cloudflare-Einstellungen und Secrets unverändert lassen. Das vollständige neue Paket
+entpacken und seinen Inhalt im GitHub-Hauptverzeichnis hochladen, vorhandene Dateien
+ersetzen und gemeinsam committen. Nicht den übergeordneten Ordner hochladen. Den
+neuesten erfolgreichen Cloudflare-Build abwarten, dann die App neu laden.
+
+Das Paket enthält die online erprobten Korrekturen für Dropbox: Aufruf der fetch-Funktion
+ohne falschen Empfänger und Zeitlimit mit AbortController. Schriftmetriken sind ein
+gewöhnliches JavaScript-Modul und benötigen keine neuere JSON-Importsyntax.
+
+Offene alte Abrechnungen mit 15 Artikeln bleiben gültig; ihre JSON- und PDF-Inhalte
+bleiben unverändert und enthalten deshalb noch kein Wappen. Neue Abrechnungen haben
+16 Artikel und das Wappen. Alte bereits übermittelte Dateien werden nicht verändert.
+
+Nach dem Update für einen neuen Funktionstest auf „Neue Abrechnung“ klicken und
+3 Dosen wählen: Die Getränkesumme muss 3,00 € betragen. Eine Ausgabe aus der Liste
+wählen und zusätzlich eine eigene Bezeichnung ausprobieren. Mit dem Kassenwart als
+Test abstimmen, dann übermitteln und PDF plus JSON in Dropbox kontrollieren.
+
+## Erstinstallation: manuell veröffentlichen
 
 1. Das vollständige Dateipaket entpacken. Es enthält keine Zugangsdaten.
 2. In Cloudflare: Workers & Pages → tvb-hallenverkauf → Settings → Builds & deployments
