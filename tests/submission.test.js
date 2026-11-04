@@ -137,3 +137,29 @@ test('network function receives no Dropbox instance as receiver',async()=>{
   const db=new Dropbox({}, {fetcher:async function(){assert.equal(this,undefined);return Response.json({});}});
   assert.equal((await db.request('test',{})).status,200);
 });
+test('4.2 preview is byte-identical to uploaded PDF, named files and stable retry',async()=>withDropbox(async fake=>{
+ const input=fixture();input.abrechnung.version='4.2';input.abrechnung.mannschaft='Damen / Ü35';
+ const req=new Request('https://example.test/api/preview',{method:'POST',headers:{Origin:'https://example.test','Content-Type':'application/json'},body:JSON.stringify(input)});
+ const {handle}=await import('../functions/api/submit.js');
+ const preview=await handle({request:req,env},true);assert.equal(preview.status,200);assert.equal(fake.files.size,0);
+ assert.match(decodeURIComponent(preview.headers.get('Content-Disposition')),/2026-11-03_Hallenverkauf_Damen _ Ü35.pdf/);
+ const bytes=new Uint8Array(await preview.arrayBuffer());
+ const first=await send(input);assert.equal(first.status,200);
+ const entry=[...fake.files.entries()].find(([name])=>name.endsWith('.pdf'));
+ assert.deepEqual(entry[1],bytes);assert.match(entry[0],/2026-11-03_Hallenverkauf_Damen _ Ü35.pdf$/);
+ assert.equal((await send(input)).status,200);assert.equal(fake.files.size,3);
+ const changed=structuredClone(input);changed.abrechnung.datum='2026-11-04';assert.equal((await send(changed)).status,409);
+ await writeFile('tmp/pdfs/v42.pdf',bytes);
+ const long=structuredClone(input);long.abrechnung.ausgaben=Array.from({length:50},(_,i)=>({text:'Ausgabe '+i+' Brötchen '.repeat(15),betrag:12.34}));
+ long.abrechnung.bemerkung='Langer Hinweis '.repeat(120);
+ await writeFile('tmp/pdfs/v42-lang.pdf',await createPdf(validieren(long),font));
+}));
+test('only final PDF upload permits Dropbox notifications',async()=>withDropbox(async fake=>{
+ const original=globalThis.fetch;const uploads=[];
+ globalThis.fetch=async(url,options)=>{if(url.endsWith('/files/upload')) uploads.push(JSON.parse(options.headers['Dropbox-API-Arg']));return original(url,options);};
+ const input=fixture();input.abrechnung.version='4.2';
+ assert.equal((await send(input)).status,200);
+ assert.equal(uploads.filter(a=>!a.mute).length,1);
+ assert.ok(uploads.find(a=>!a.mute).path.endsWith('.pdf'));
+ assert.ok(uploads.filter(a=>!a.path.endsWith('.pdf')).every(a=>a.mute));
+}));

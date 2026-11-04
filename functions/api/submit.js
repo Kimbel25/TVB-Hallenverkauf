@@ -1,5 +1,6 @@
 import {validieren, PublicError} from '../../lib/abrechnung.js';
 import {Dropbox} from '../../lib/dropbox.js';
+import {dateiname} from '../../lib/dateiname.js';
 import {createPdf} from '../../lib/pdf.js';
 const headers = {'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff'};
 const reply = (data, status=200) => new Response(JSON.stringify(data), {status,headers});
@@ -29,33 +30,44 @@ async function sameSecret(actual, expected) {
   let diff=0; for(let i=0; i<a.length; i++) diff |= a[i]^b[i];
   return diff === 0;
 }
-export async function onRequestPost({request,env}) {
+export async function handle({request,env},preview=false) {
   try {
     if(request.headers.get('Origin') !== new URL(request.url).origin) throw new PublicError('Zugriff verweigert.',403);
     if(request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') throw new PublicError('JSON erforderlich.',415);
-    if(!env.TVB_VEREINSCODE || !env.DROPBOX_APP_KEY || !env.DROPBOX_APP_SECRET || !env.DROPBOX_REFRESH_TOKEN || !env.ASSETS) {
+    if(!env.ASSETS || (!preview && (!env.TVB_VEREINSCODE || !env.DROPBOX_APP_KEY || !env.DROPBOX_APP_SECRET || !env.DROPBOX_REFRESH_TOKEN))) {
       throw new PublicError('Serverkonfiguration muss vom Kassenwart geprüft werden.',503);
     }
     const input = await readInput(request);
-    if(!await sameSecret(input?.vereinscode,env.TVB_VEREINSCODE)) throw new PublicError('Vereinscode ungültig.',403);
+    if(!preview && !await sameSecret(input?.vereinscode,env.TVB_VEREINSCODE)) throw new PublicError('Vereinscode ungültig.',403);
     const data = validieren(input);
     const fontResponse = await env.ASSETS.fetch(new URL('/assets/fonts/NotoSans.deflate',request.url));
     if(!fontResponse.ok) throw new Error('font');
     // Vor dem ersten Dropbox-Schreibvorgang auf vollständig erzeugbares PDF prüfen.
     const pdf = await createPdf(data,await fontResponse.arrayBuffer());
+    if(preview) return new Response(pdf,{headers:{'Content-Type':'application/pdf','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Disposition':"inline; filename=\"Hallenverkauf.pdf\"; filename*=UTF-8''"+encodeURIComponent(dateiname(data)+'.pdf')}});
     const json = new TextEncoder().encode(JSON.stringify(data,null,2));
     const dropbox = new Dropbox(env);
     await dropbox.connect();
     await dropbox.folder('/Abrechnungen');
     await dropbox.folder('/Abrechnungen/V4_1');
     // Globale ID statt Datum/Mannschaft im Pfad: geänderte Daten unter gleicher ID kollidieren.
-    const path = '/Abrechnungen/V4_1/' + data.id;
+    let path = '/Abrechnungen/V4_1/' + data.id;
+    if(data.version==='4.2') {
+      await dropbox.folder('/Abrechnungen/V4_2');
+      await dropbox.folder('/Abrechnungen/V4_2/_Vorgaenge');
+      await dropbox.file('/Abrechnungen/V4_2/_Vorgaenge/'+data.id+'.lock',json);
+      const dir='/Abrechnungen/V4_2/'+data.id;
+      await dropbox.folder(dir);
+      path=dir+'/'+dateiname(data);
+    }
     const jsonFile = await dropbox.file(path + '.json',json);
-    const pdfFile = await dropbox.file(path + '.pdf',pdf);
-    return reply({ok:true, version:'4.1', id:data.id, status:'vollständig', dateien:{json:jsonFile,pdf:pdfFile}});
+    const pdfFile = await dropbox.file(path + '.pdf',pdf,{notify:true});
+    return reply({ok:true, version:data.version, id:data.id, status:'vollständig', dateien:{json:jsonFile,pdf:pdfFile}});
   } catch(error) {
     // Keine Zugangsdaten, Nutzdaten oder Dropbox-Antworten in Logs/Fehlermeldungen.
     if(error instanceof PublicError) return reply({ok:false,error:error.message},error.status);
     return reply({ok:false,error:'Übermittlung nicht bestätigt. Bitte dieselbe Abrechnung erneut übermitteln.'},503);
   }
 }
+
+export const onRequestPost = context => handle(context);

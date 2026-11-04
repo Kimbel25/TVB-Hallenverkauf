@@ -21,11 +21,14 @@ label{font-size:14px;font-weight:600;display:block;margin-bottom:7px}
 input,select,textarea{font:inherit;border:1px solid #c9c9cf;border-radius:10px;padding:12px;color:#111;background:#fff;width:100%;min-width:0}
 input:focus,textarea:focus{outline:2px solid #c41222;outline-offset:1px}
 .field{margin:13px 0}
-.item{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #eee}
+.item:nth-child(even){background:#f0f0f3}
+.item{padding-left:8px!important;padding-right:8px!important;display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:8px;align-items:center;padding:13px 0;border-bottom:1px solid #eee}
 .item:last-child{border-bottom:0}
 .item strong{font-size:14px;display:block}
 .item small{display:block;margin-top:4px;color:#626262;font-size:12px}
-.item input{text-align:center;font-size:19px;font-weight:600;color:#111!important;background:#fff!important}
+.mengenfeld{display:grid;grid-template-columns:32px minmax(0,1fr) 32px;gap:3px;align-items:center}
+.schritt{padding:8px 0;background:#dedee3;color:#111;font-size:21px;min-height:44px}
+.item input{padding:10px 0;text-align:center;font-size:19px;font-weight:600;color:#111!important;background:#fff!important}
 .total{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;padding:17px;background:#f4f4f5;border-radius:12px;margin-top:15px}
 .total b{font-size:20px;white-space:nowrap}
 .grand{background:#b8091a;color:white}
@@ -98,11 +101,11 @@ input,textarea{border:0;padding:4px}
 <div class="total grand"><span>Gesamtausgaben</span><b id="gesamt">0,00 €</b></div>
 <div class="field"><label for="bemerkung">Bemerkungen</label><textarea id="bemerkung" rows="3" placeholder="Optional"></textarea></div>
 <div class="actions">
-<button class="primary" onclick="pdfErstellen()">Druckvorschau / lokale PDF</button>
+<button class="primary" onclick="pdfErstellen()">PDF ansehen / herunterladen</button>
 <button class="secondary" onclick="zuruecksetzen()">Neue Abrechnung</button>
 </div>
 <p class="status" id="status">Die Eingaben werden lokal auf diesem Gerät gespeichert.</p>
-<p class="note">Bei der Übermittlung werden PDF und JSON automatisch erstellt und in Dropbox gespeichert. Die Druckfunktion dient als lokale Vorschau.</p>
+<p class="note">Bei der Übermittlung werden PDF und JSON automatisch erstellt und in Dropbox gespeichert. Die PDF-Vorschau verwendet denselben Serverbeleg wie die Dropbox-Übermittlung und benötigt eine Internetverbindung.</p>
 </section>
 
 
@@ -137,7 +140,7 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>TV Birkenfeld 1848 · Hallenverkauf V4.1</footer>
+<footer>TV Birkenfeld 1848 · Hallenverkauf V4.2</footer>
 
 <script>
 const artikel=[
@@ -167,12 +170,14 @@ let saveTimer;
 const sendKey="tvb_submission_v41";
 let sending=false;
 let storedSubmission=null;
+let previewId=crypto.randomUUID();
 
+function mengeAendern(i,delta){mengen[i]=Math.min(10000,Math.max(0,mengen[i]+delta));const el=document.querySelector(`.menge[data-index="${i}"]`);el.value=mengen[i]||"";berechnen();}
 function renderWaren(){
 $("waren").innerHTML=artikel.map((a,i)=>`
 <div class="item">
 <div><strong>${a[0]}</strong><small>Lieferantenpreis: ${euro(a[1])}</small></div>
-<input type="number" min="0" step="1" inputmode="numeric" aria-label="Anzahl ${a[0]}" value="${mengen[i]||""}" data-index="${i}" class="menge">
+<div class="mengenfeld"><button type="button" class="schritt" aria-label="${a[0]} verringern" onclick="mengeAendern(${i},-1)">−</button><input type="number" min="0" max="10000" step="1" inputmode="numeric" aria-label="Anzahl ${a[0]}" value="${mengen[i]||""}" data-index="${i}" class="menge"><button type="button" class="schritt" aria-label="${a[0]} erhöhen" onclick="mengeAendern(${i},1)">+</button></div>
 </div>`).join("");
 document.querySelectorAll(".menge").forEach(el=>{
 el.addEventListener("input",()=>{
@@ -226,7 +231,7 @@ return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
 function daten(){
 return {
-version:"4.1",
+version:"4.2",
 datum:$("datum").value,
 mannschaft:$("mannschaft").value,
 person:$("person").value,
@@ -279,9 +284,22 @@ return false;
 }
 return true;
 }
-function pdfErstellen(){
+async function pdfErstellen(){
 if(!validieren())return;
-window.print();
+const record=storedSubmission;
+const d=record?.abrechnung||daten();
+const id=record?.id||previewId;
+const button=document.querySelector('button[onclick="pdfErstellen()"]');button.disabled=true;
+try {
+ const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,abrechnung:d})});
+ if(!response.ok){const error=await response.json();throw Error(error.error||'PDF konnte nicht erstellt werden.');}
+ if(!response.headers.get("Content-Type")?.startsWith("application/pdf")) throw Error("Keine gültige PDF-Antwort erhalten.");
+ const blob=await response.blob();const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');link.href=url;
+ const filename=response.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/)?.[1];
+ link.download=filename?decodeURIComponent(filename):'Hallenverkauf.pdf';
+ link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+}catch(error){alert(error.message);}finally{button.disabled=false;}
 }
 function zuruecksetzen(){
 if(sending || (storedSubmission && storedSubmission.state!=="sent")){
@@ -293,6 +311,7 @@ clearTimeout(saveTimer);
 localStorage.removeItem(sendKey);
 localStorage.removeItem("tvb_pending_submission_id");
 storedSubmission=null;
+previewId=crypto.randomUUID();
 lockForm(false);
 $("sendenButton").disabled=false;
 $("sendenButton").textContent="Abrechnung an Kassenwart übermitteln";
@@ -369,7 +388,7 @@ async function sendSubmission() {
     if(!record && !validieren()) return;
     const code=$("vereinscode").value.trim();
     if(!code) {alert("Bitte den Vereinscode eingeben.");return;}
-    if(!record) record={id:crypto.randomUUID(),abrechnung:daten(),state:"pending",attempts:0};
+    if(!record) record={id:previewId,abrechnung:daten(),state:"pending",attempts:0};
     record.attempts=(record.attempts||0)+1;
     // Vor jedem Netzwerkzugriff sichern; bei Speicherfehler wird nichts gesendet.
     localStorage.setItem(sendKey,JSON.stringify(record));
@@ -391,7 +410,7 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || result.version!=="4.1" || result.status!=="vollständig" ||
+      if(result.id!==record.id || !["4.1","4.2"].includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));
