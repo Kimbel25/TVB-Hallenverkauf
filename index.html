@@ -77,8 +77,8 @@ input,textarea{border:0;padding:4px}
 <body>
 <header>
 <img class="wappen" src="/assets/tvb-wappen.svg" alt="Wappen des Turnverein Birkenfeld 1848" width="90" height="90">
-<h1>TVB Hallenverkauf</h1>
-<p>Turnverein Birkenfeld 1848 · Ausgabenabrechnung</p>
+<h1>TVB Hallenverkauf<br><span style="font-size:17px">Saison 2026/2027</span></h1>
+<p>Turnverein Birkenfeld · Abteilung Handball · Version 4.5</p>
 </header>
 <main>
 <section>
@@ -87,7 +87,7 @@ input,textarea{border:0;padding:4px}
 <input type="hidden" id="mannschaft">
 <div class="field"><label for="team1">Mannschaft / Gruppe</label><select id="team1"></select><input id="team1Eigen" aria-label="Eigene Gruppe 1" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
 <div class="field"><label for="team2">Zweite Mannschaft / Gruppe (optional)</label><select id="team2"></select><input id="team2Eigen" aria-label="Eigene Gruppe 2" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
-<div class="field"><label for="person">Verantwortliche Person</label><input id="person" placeholder="Vor- und Nachname"></div>
+<div class="field"><label for="person">Name</label><input id="person" placeholder="Vor- und Nachname"></div>
 </section>
 
 <section>
@@ -156,7 +156,7 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>TV Birkenfeld 1848 · Hallenverkauf V4.4</footer>
+<footer>Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027 · Version 4.5</footer>
 
 <dialog id="erfolgDialog" aria-labelledby="erfolgTitel">
 <h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
@@ -298,7 +298,7 @@ return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
 function daten(){
 return {
-version:"4.4",
+version:"4.5",
 datum:$("datum").value,
 mannschaft:$("mannschaft").value,
 teamAuswahl:{erste:$("team1").value,zweite:$("team2").value,eigen1:$("team1Eigen").value,eigen2:$("team2Eigen").value},
@@ -344,7 +344,7 @@ if(teamWert('team2') && teamWert('team1').toLocaleLowerCase('de-DE')===teamWert(
 if($('mannschaft').value.length>120){alert('Die Gruppenbezeichnungen sind zusammen zu lang (höchstens 120 Zeichen).');return false;}
 
 if(!$("datum").value||!$("mannschaft").value.trim()||!$("person").value.trim()){
-alert("Bitte zuerst Datum, Mannschaft und verantwortliche Person ausfüllen.");
+alert("Bitte zuerst Datum, Mannschaft und Name ausfüllen.");
 return false;
 }
 if(ausgaben.some(a=>Number(a.betrag)>0&&!String(a.text).trim())){
@@ -483,7 +483,7 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || !["4.1","4.2","4.3","4.4"].includes(result.version) || result.status!=="vollständig" ||
+      if(result.id!==record.id || !["4.1","4.2","4.3","4.4","4.5"].includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));

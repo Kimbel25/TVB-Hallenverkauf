@@ -1,4 +1,4 @@
-# TVB Hallenverkauf 4.4
+# TVB Hallenverkauf 4.5
 
 ## Manuelles Update
 
@@ -129,3 +129,23 @@ wie bisher gemeinsam in GitHub hochladen und committen. Anschließend den neuest
 grünen Cloudflare-Build abwarten. Die tatsächliche iPhone-Installation konnte lokal
 nicht getestet werden; Menü, zwei Mannschaften, freie Gruppen, Neuladen, Bestätigung,
 Downloads und Icon-Dateiabruf wurden im getrennten Browser getestet.
+
+
+## Ergänzung 4.5: Belegkopf und Abstände
+
+TVB Hallenverkauf in kräftiger Schrift, Saison 2026/2027, Turnverein Birkenfeld,
+Abteilung Handball und Version 4.5. Datum, Mannschaft und Name stehen links in einer
+festen Beschriftungsspalte; ihre Werte beginnen alle an derselben Position. Lange
+Werte werden innerhalb der Wertespalte umgebrochen. Die Gesamtsumme hat zusätzlich
+8 Punkte Abstand unter der Rechenlinie. In der App heißt das Personenfeld ebenfalls
+„Name“, der Datenschlüssel bleibt aus Kompatibilitätsgründen person.
+Neue Abrechnungen verwenden V4_5. Die PDF-Generatoren früherer Versionen bleiben
+für offene Vorgänge erhalten, damit Wiederholungen dieselben Belegbytes erzeugen.
+Die Saison ist bewusst fest 2026/2027 und muss beim Saisonwechsel angepasst werden.
+
+Absenderidentität: Es werden keine Betriebssystem-Anmeldenamen, Apple-IDs oder
+vermeintlich verifizierte Gerätenamen ausgelesen. Das frei eingegebene Namensfeld
+und der gemeinsame Vereinscode verifizieren keine individuelle Person. Eine spätere
+Zuordnung zu persönlichen Benutzerkonten erfordert eine eigene Anmeldung, etwa
+individuelle Konten oder einen bestätigten Anmeldelink. Dies ist nicht Bestandteil
+von Version 4.5.
