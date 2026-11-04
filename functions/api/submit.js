@@ -52,11 +52,12 @@ export async function handle({request,env},preview=false) {
     await dropbox.folder('/Abrechnungen/V4_1');
     // Globale ID statt Datum/Mannschaft im Pfad: geänderte Daten unter gleicher ID kollidieren.
     let path = '/Abrechnungen/V4_1/' + data.id;
-    if(data.version==='4.2') {
-      await dropbox.folder('/Abrechnungen/V4_2');
-      await dropbox.folder('/Abrechnungen/V4_2/_Vorgaenge');
-      await dropbox.file('/Abrechnungen/V4_2/_Vorgaenge/'+data.id+'.lock',json);
-      const dir='/Abrechnungen/V4_2/'+data.id;
+    if(['4.2','4.3'].includes(data.version)) {
+      const base='/Abrechnungen/V'+data.version.replace('.','_');
+      await dropbox.folder(base);
+      await dropbox.folder(base+'/_Vorgaenge');
+      await dropbox.file(base+'/_Vorgaenge/'+data.id+'.lock',json);
+      const dir=base+'/'+data.id;
       await dropbox.folder(dir);
       path=dir+'/'+dateiname(data);
     }

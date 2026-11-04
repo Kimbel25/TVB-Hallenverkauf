@@ -1,4 +1,4 @@
-# TVB Hallenverkauf 4.2
+# TVB Hallenverkauf 4.3
 
 ## Manuelles Update
 
@@ -43,7 +43,7 @@ PDF übereinstimmen. Datum, Mannschaft, Ausgaben und Summen prüfen. Den Kassenw
 informieren, dass der Test nicht verbucht werden soll.
 
 Lokal: Node.js 22+, `npm test` und `npm run build`. Keine Laufzeitabhängigkeiten.
-16 Funktionstests umfassen unter anderem die Gleichheit von Vorschau und Upload,
+17 Funktionstests umfassen unter anderem die Gleichheit von Vorschau und Upload,
 Dateinamen mit Umlauten, Konflikte nach Datumsänderung, Teilfehler und Wiederholung.
 Der Browser wurde zusätzlich mit simulierten Antworten geprüft. Keine echten
 Vereinsabrechnungen wurden bei den lokalen Tests gesendet.
@@ -58,3 +58,29 @@ eine konkrete Meldung oder deren Wortlaut ist dadurch nicht garantiert. Dropbox 
 auf dem Mac angemeldet sein und laufen, Mitteilungen müssen in Dropbox und macOS
 erlaubt sein. Bitte mit einer neuen markierten Testabrechnung prüfen. Es wird keine
 zusätzliche E-Mail oder eigene macOS-Mitteilung versendet.
+
+
+## Ergänzungen 4.3
+
+App-Icon im HTML-Head: Apple-Touch-Icon 180×180, Browser-Icon 32×32.
+Zusätzlich liegt assets/icon-100x180.png bei. Alle PNGs stammen aus dem Original-SVG.
+Die Symbole für Flaschen, Kisten und Dosen sind direkt eingebettete SVG-Zeichnungen.
+Die Originalbezeichnungen und Preise bleiben sichtbar.
+
+Die Ausgaben verwenden ein natives Auswahlmenü statt eines Datalist-Vorschlagsfelds.
+„Andere Ausgabe …“ öffnet das freie Textfeld. Die Bestätigung nennt Geldentnahme
+und Quittungen. Datum, Mannschaft und Person haben identische Feldhöhen.
+Touch-action: manipulation verhindert Doppeltipp-Zoom auf Bedienelementen, ohne
+Pinch-Zoom generell abzuschalten; die Schrift der Eingaben ist mindestens 16 px.
+
+Nach bestätigtem Versand erscheint ein Dialog „Übermittlung erfolgreich“ mit einem
+OK-Button. Bei einem fehlgeschlagenen oder nur teilweise bestätigten Versand wird er
+nicht angezeigt. Die bereits ergänzte Dropbox-Mac-Benachrichtigung bleibt aktiviert.
+
+Neue PDFs haben einen weißen Kopf statt des roten Flächenbalkens. Logo und wenige
+rote Überschriften bleiben erhalten. Neue Abrechnungen liegen unter V4_3, alte offene
+Vorgänge bleiben in ihren bisherigen Versionen und behalten deren bytegleiche PDFs.
+Cloudflare-Einstellungen und Secrets unverändert lassen. Nach dem neuen grünen Build
+App neu laden, „Neue Abrechnung“ wählen und als Test absprechen, bevor echte Dateien
+in Dropbox geschrieben werden. Die mobile Bedienung wurde lokal geprüft; den Zoom
+bitte zusätzlich auf dem tatsächlich verwendeten iPhone/Android ausprobieren.

@@ -5,11 +5,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#c41222">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180.png">
+<meta name="apple-mobile-web-app-title" content="TVB Hallenverkauf">
 <title>TVB Hallenverkauf</title>
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#191919;background:#f5f5f7}
 *{box-sizing:border-box}
 body{margin:0}
+button,input,select,label{touch-action:manipulation}
+input,select,textarea{font-size:16px!important}
+#datum,#mannschaft,#person{height:50px;min-height:50px;font-size:16px;appearance:none;-webkit-appearance:none;line-height:24px}
+#datum::-webkit-date-and-time-value{text-align:left}
+.artikelTitel strong{min-width:0;overflow-wrap:anywhere}
+.artikelTitel{min-width:0;display:flex;align-items:center;gap:8px}
+.artikelIcon{width:27px;height:32px;flex:0 0 27px;color:#333}
+.artikelTyp{font-size:11px;font-weight:600;color:#555;margin-top:3px}
+dialog{border:0;border-radius:18px;padding:26px;max-width:420px;width:calc(100% - 32px);box-shadow:0 15px 60px #0005}
+dialog::backdrop{background:#0008}
+dialog h2{font-size:23px}dialog p{line-height:1.6}
+.expenseName{display:flex;flex-direction:column;gap:6px}.expenseName input[hidden]{display:none}
+
 header{background:#b8091a;color:white;padding:22px 16px;text-align:center}
 .wappen{display:block;width:90px;height:auto;margin:0 auto 12px}
 header h1{font-size:23px;margin:0 0 5px}
@@ -80,17 +96,13 @@ input,textarea{border:0;padding:4px}
 <section>
 <h2>3. Sonstige Ausgaben</h2>
 <p class="note">Bezeichnung aus den Vorschlägen auswählen oder einen eigenen Text eingeben.</p>
-<datalist id="ausgabenVorschlaege">
-<option value="Würstchenbrötchen"></option>
-<option value="Brezeln"></option>
-<option value="Schnitzel"></option>
-</datalist>
+
 <div id="ausgaben"></div>
 <button class="secondary" onclick="addAusgabe()">+ Ausgabe hinzufügen</button>
 <div class="total"><span>Sonstige Ausgaben</span><b id="ausgabenSumme">0,00 €</b></div>
 <div class="check">
 <input type="checkbox" id="quittungen">
-<label for="quittungen">Ich bestätige, dass die Quittungen für die sonstigen Ausgaben in der Kasse liegen.</label>
+<label for="quittungen">Ich bestätige, dass das Geld für die sonstigen Ausgaben aus der Kasse entnommen und die zugehörigen Quittungen in der Kasse hinterlegt wurden.</label>
 </div>
 </section>
 
@@ -140,8 +152,13 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>TV Birkenfeld 1848 · Hallenverkauf V4.2</footer>
+<footer>TV Birkenfeld 1848 · Hallenverkauf V4.3</footer>
 
+<dialog id="erfolgDialog" aria-labelledby="erfolgTitel">
+<h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
+<p>Deine Abrechnung wurde übermittelt. PDF und JSON sind in Dropbox bestätigt gespeichert.</p>
+<button class="primary" autofocus onclick="document.getElementById('erfolgDialog').close()">OK, verstanden</button>
+</dialog>
 <script>
 const artikel=[
 ["Bier/Radler/Alkoholfrei – 20er Kasten",16],
@@ -173,10 +190,15 @@ let storedSubmission=null;
 let previewId=crypto.randomUUID();
 
 function mengeAendern(i,delta){mengen[i]=Math.min(10000,Math.max(0,mengen[i]+delta));const el=document.querySelector(`.menge[data-index="${i}"]`);el.value=mengen[i]||"";berechnen();}
+function artikelSymbol(name){
+const typ=/Kasten/.test(name)?'Kiste':/Flasche/.test(name)?'Flasche':/Dose/.test(name)?'Dose':'';
+const path=typ==='Kiste'?'<rect x="2" y="11" width="26" height="18" rx="2"/><path d="M7 11V5h5v6m6 0V5h5v6M3 18h24M10 18v10m10-10v10"/>':typ==='Flasche'?'<path d="M12 2h6v8l4 6v14H8V16l4-6V2Zm0 5h6M8 20h14"/>':'<rect x="7" y="3" width="17" height="27" rx="4"/><path d="M8 8h15M8 25h15M12 4h7"/>';
+return typ?`<svg class="artikelIcon" viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">${path}</svg>`:'';
+}
 function renderWaren(){
 $("waren").innerHTML=artikel.map((a,i)=>`
 <div class="item">
-<div><strong>${a[0]}</strong><small>Lieferantenpreis: ${euro(a[1])}</small></div>
+<div><div class="artikelTitel">${artikelSymbol(a[0])}<strong>${a[0]}</strong></div><small>Lieferantenpreis: ${euro(a[1])}</small></div>
 <div class="mengenfeld"><button type="button" class="schritt" aria-label="${a[0]} verringern" onclick="mengeAendern(${i},-1)">−</button><input type="number" min="0" max="10000" step="1" inputmode="numeric" aria-label="Anzahl ${a[0]}" value="${mengen[i]||""}" data-index="${i}" class="menge"><button type="button" class="schritt" aria-label="${a[0]} erhöhen" onclick="mengeAendern(${i},1)">+</button></div>
 </div>`).join("");
 document.querySelectorAll(".menge").forEach(el=>{
@@ -195,10 +217,18 @@ const row=document.createElement("div");
 row.className="expense";
 const desc=document.createElement("input");
 desc.placeholder="Auswählen oder eigene Bezeichnung";
-desc.setAttribute("list","ausgabenVorschlaege");
+
 desc.value=a.text||"";
 desc.setAttribute("aria-label","Ausgabe Bezeichnung");
 desc.addEventListener("input",()=>{ausgaben[i].text=desc.value;speichern();});
+const choice=document.createElement("select");choice.setAttribute("aria-label","Ausgabe auswählen");
+const labels=["Bitte auswählen …","Würstchenbrötchen","Brezeln","Schnitzel","Andere Ausgabe …"];
+labels.forEach((label,j)=>{const option=document.createElement("option");option.value=j===0?"":j===4?"custom":label;option.textContent=label;choice.append(option);});
+const known=labels.slice(1,4).includes(a.text);
+choice.value=known?a.text:a.text?"custom":"";desc.hidden=choice.value!=="custom";
+choice.addEventListener("change",()=>{desc.hidden=choice.value!=="custom";if(choice.value==="custom"){ausgaben[i].text=desc.value;desc.focus();}else{ausgaben[i].text=choice.value;desc.value=choice.value;}speichern();});
+const nameGroup=document.createElement("div");nameGroup.className="expenseName";nameGroup.append(choice,desc);
+
 const betrag=document.createElement("input");
 betrag.type="number";betrag.min="0";betrag.step="0.01";betrag.inputMode="decimal";
 betrag.placeholder="Euro";betrag.value=a.betrag||"";
@@ -210,7 +240,7 @@ berechnen();
 const del=document.createElement("button");
 del.className="delete";del.textContent="×";del.title="Ausgabe entfernen";
 del.onclick=()=>{ausgaben.splice(i,1);renderAusgaben();berechnen();};
-row.append(desc,betrag,del);
+row.append(nameGroup,betrag,del);
 root.append(row);
 });
 }
@@ -231,7 +261,7 @@ return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
 function daten(){
 return {
-version:"4.2",
+version:"4.3",
 datum:$("datum").value,
 mannschaft:$("mannschaft").value,
 person:$("person").value,
@@ -335,7 +365,7 @@ laden();renderWaren();renderAusgaben();berechnen();
 
 
 function lockForm(locked) {
-  document.querySelectorAll("main input,main textarea,main button").forEach(el=>{
+  document.querySelectorAll("main input,main select,main textarea,main button").forEach(el=>{
     if(el.id==="vereinscode" || el.id==="sendenButton" ||
        ["pdfErstellen()","zuruecksetzen()"].includes(el.getAttribute("onclick"))) return;
     el.disabled=locked;
@@ -410,13 +440,14 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || !["4.1","4.2"].includes(result.version) || result.status!=="vollständig" ||
+      if(result.id!==record.id || !["4.1","4.2","4.3"].includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));
       restoreSubmission(record);
       $("vereinscode").value="";
       status.textContent="PDF und JSON erfolgreich in Dropbox bestätigt. Vorgang: "+record.id;
+      $("erfolgDialog").showModal();
     } catch(error) {
       status.textContent="Nicht als erfolgreich bestätigt: "+error.message+
         (storedSubmission ? " Bitte dieselbe Abrechnung erneut übermitteln. Vorgang: "+record.id : " Bitte Eingaben korrigieren.");

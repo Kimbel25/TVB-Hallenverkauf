@@ -3,6 +3,7 @@ import {mkdir,copyFile,rm} from 'node:fs/promises';
 await rm('public',{recursive:true,force:true});
 await mkdir('public/assets/fonts',{recursive:true});
 await copyFile('index.html','public/index.html');
+for(const name of ['icon-32.png','icon-180.png','icon-100x180.png']) await copyFile('assets/'+name,'public/assets/'+name);
 await copyFile('assets/tvb-wappen.svg','public/assets/tvb-wappen.svg');
 for(const name of ['NotoSans.deflate','OFL.txt']) {
   await copyFile('assets/fonts/'+name,'public/assets/fonts/'+name);
