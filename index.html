@@ -6,7 +6,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#c41222">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4.4">
+<link rel="manifest" href="/manifest.webmanifest?v=4.4">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TVB Hallenverkauf">
 <title>TVB Hallenverkauf</title>
 <style>
@@ -15,7 +17,7 @@
 body{margin:0}
 button,input,select,label{touch-action:manipulation}
 input,select,textarea{font-size:16px!important}
-#datum,#mannschaft,#person{height:50px;min-height:50px;font-size:16px;appearance:none;-webkit-appearance:none;line-height:24px}
+#datum,#team1,#team2,#team1Eigen,#team2Eigen,#person{height:50px;min-height:50px;font-size:16px;appearance:none;-webkit-appearance:none;line-height:24px}
 #datum::-webkit-date-and-time-value{text-align:left}
 .artikelTitel strong{min-width:0;overflow-wrap:anywhere}
 .artikelTitel{min-width:0;display:flex;align-items:center;gap:8px}
@@ -82,7 +84,9 @@ input,textarea{border:0;padding:4px}
 <section>
 <h2>1. Hallendienst</h2>
 <div class="field"><label for="datum">Datum</label><input type="date" id="datum"></div>
-<div class="field"><label for="mannschaft">Mannschaft</label><input id="mannschaft" placeholder="z. B. Damen 1"></div>
+<input type="hidden" id="mannschaft">
+<div class="field"><label for="team1">Mannschaft / Gruppe</label><select id="team1"></select><input id="team1Eigen" aria-label="Eigene Gruppe 1" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
+<div class="field"><label for="team2">Zweite Mannschaft / Gruppe (optional)</label><select id="team2"></select><input id="team2Eigen" aria-label="Eigene Gruppe 2" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
 <div class="field"><label for="person">Verantwortliche Person</label><input id="person" placeholder="Vor- und Nachname"></div>
 </section>
 
@@ -152,7 +156,7 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>TV Birkenfeld 1848 · Hallenverkauf V4.3</footer>
+<footer>TV Birkenfeld 1848 · Hallenverkauf V4.4</footer>
 
 <dialog id="erfolgDialog" aria-labelledby="erfolgTitel">
 <h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
@@ -188,6 +192,39 @@ const sendKey="tvb_submission_v41";
 let sending=false;
 let storedSubmission=null;
 let previewId=crypto.randomUUID();
+const senioren=["Damen 1","Herren","Damen 2","Damen 3"];
+const jugend=["männliche A-Jugend","weibliche A-Jugend","männliche B-Jugend","weibliche B-Jugend","männliche C-Jugend","weibliche C-Jugend","männliche D-Jugend","weibliche D-Jugend","männliche E-Jugend","weibliche E-Jugend","gemischte F-Jugend","Minis"];
+for(const id of ['team1','team2']) {
+ const select=$(id);const empty=new Option(id==='team1'?'Bitte auswählen …':'Keine zweite Mannschaft','');select.add(empty);
+ for(const [title,teams] of [['Senioren',senioren],['Jugend',jugend]]) {
+  const group=document.createElement('optgroup');group.label=title;
+  teams.forEach(name=>group.append(new Option(name,name)));select.append(group);
+ }
+ select.add(new Option('Andere Gruppe …','custom'));
+ select.addEventListener('change',()=>{teamsZusammenfassen();speichern();});
+ $(id+'Eigen').addEventListener('input',()=>{teamsZusammenfassen();speichern();});
+}
+function teamWert(id){return $(id).value==='custom'?$(id+'Eigen').value.trim():$(id).value;}
+function teamsZusammenfassen(){
+ for(const id of ['team1','team2']) $(id+'Eigen').hidden=$(id).value!=='custom';
+ $('mannschaft').value=[teamWert('team1'),teamWert('team2')].filter(Boolean).join(' / ');
+}
+function teamsLaden(d){
+ const saved=d.teamAuswahl;
+ if(saved && typeof saved.erste==='string' && typeof saved.zweite==='string') {
+  $('team1').value=saved.erste;$('team2').value=saved.zweite;
+  $('team1Eigen').value=typeof saved.eigen1==='string'?saved.eigen1:'';
+  $('team2Eigen').value=typeof saved.eigen2==='string'?saved.eigen2:'';
+ } else {
+  const name=d.mannschaft||'';const known=[...senioren,...jugend];
+  const pair=name.split(' / ');
+  if(pair.length===2 && pair.every(n=>known.includes(n))) {$('team1').value=pair[0];$('team2').value=pair[1];$('team1Eigen').value='';}
+  else {$('team1').value=known.includes(name)?name:name?'custom':'';$('team1Eigen').value=known.includes(name)?'':name;$('team2').value='';}
+  $('team2Eigen').value='';
+ }
+ teamsZusammenfassen();
+}
+
 
 function mengeAendern(i,delta){mengen[i]=Math.min(10000,Math.max(0,mengen[i]+delta));const el=document.querySelector(`.menge[data-index="${i}"]`);el.value=mengen[i]||"";berechnen();}
 function artikelSymbol(name){
@@ -222,9 +259,9 @@ desc.value=a.text||"";
 desc.setAttribute("aria-label","Ausgabe Bezeichnung");
 desc.addEventListener("input",()=>{ausgaben[i].text=desc.value;speichern();});
 const choice=document.createElement("select");choice.setAttribute("aria-label","Ausgabe auswählen");
-const labels=["Bitte auswählen …","Würstchenbrötchen","Brezeln","Schnitzel","Andere Ausgabe …"];
-labels.forEach((label,j)=>{const option=document.createElement("option");option.value=j===0?"":j===4?"custom":label;option.textContent=label;choice.append(option);});
-const known=labels.slice(1,4).includes(a.text);
+const labels=["Bitte auswählen …","Würstchen","Brötchen","Brezeln","Schnitzel","Bäcker","Metzger","Lebensmittel","Andere Ausgabe …"];
+labels.forEach((label,j)=>{const option=document.createElement("option");option.value=j===0?"":j===labels.length-1?"custom":label;option.textContent=label;choice.append(option);});
+const known=labels.slice(1,-1).includes(a.text);
 choice.value=known?a.text:a.text?"custom":"";desc.hidden=choice.value!=="custom";
 choice.addEventListener("change",()=>{desc.hidden=choice.value!=="custom";if(choice.value==="custom"){ausgaben[i].text=desc.value;desc.focus();}else{ausgaben[i].text=choice.value;desc.value=choice.value;}speichern();});
 const nameGroup=document.createElement("div");nameGroup.className="expenseName";nameGroup.append(choice,desc);
@@ -261,9 +298,10 @@ return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
 function daten(){
 return {
-version:"4.3",
+version:"4.4",
 datum:$("datum").value,
 mannschaft:$("mannschaft").value,
+teamAuswahl:{erste:$("team1").value,zweite:$("team2").value,eigen1:$("team1Eigen").value,eigen2:$("team2Eigen").value},
 person:$("person").value,
 waren:artikel.map((a,i)=>({
 bezeichnung:a[0],anzahl:mengen[i]||0,
@@ -291,7 +329,7 @@ try{
 const d=JSON.parse(localStorage.getItem(key)||"null");
 if(!d)return;
 $("datum").value=d.datum||"";
-$("mannschaft").value=d.mannschaft||"";
+teamsLaden(d);
 $("person").value=d.person||"";
 $("quittungen").checked=!!d.quittungen;
 $("bemerkung").value=d.bemerkung||"";
@@ -300,6 +338,11 @@ if(Array.isArray(d.ausgaben))ausgaben=d.ausgaben;
 }catch(e){}
 }
 function validieren(){
+teamsZusammenfassen();
+if(!teamWert('team1') || ($('team2').value==='custom' && !teamWert('team2'))){alert('Bitte die Mannschaft bzw. den Namen der ausgewählten Gruppe eingeben.');return false;}
+if(teamWert('team2') && teamWert('team1').toLocaleLowerCase('de-DE')===teamWert('team2').toLocaleLowerCase('de-DE')){alert('Bitte zwei unterschiedliche Mannschaften oder Gruppen auswählen.');return false;}
+if($('mannschaft').value.length>120){alert('Die Gruppenbezeichnungen sind zusammen zu lang (höchstens 120 Zeichen).');return false;}
+
 if(!$("datum").value||!$("mannschaft").value.trim()||!$("person").value.trim()){
 alert("Bitte zuerst Datum, Mannschaft und verantwortliche Person ausfüllen.");
 return false;
@@ -350,7 +393,7 @@ localStorage.removeItem(key);
 mengen=Array(artikel.length).fill(0);
 ausgaben=[];
 $("datum").value=new Date().toLocaleDateString("en-CA");
-$("mannschaft").value="";
+teamsLaden({});
 $("person").value="";
 $("quittungen").checked=false;
 $("bemerkung").value="";
@@ -440,7 +483,7 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || !["4.1","4.2","4.3"].includes(result.version) || result.status!=="vollständig" ||
+      if(result.id!==record.id || !["4.1","4.2","4.3","4.4"].includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));

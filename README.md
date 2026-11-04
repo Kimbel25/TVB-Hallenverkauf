@@ -1,4 +1,4 @@
-# TVB Hallenverkauf 4.3
+# TVB Hallenverkauf 4.4
 
 ## Manuelles Update
 
@@ -84,3 +84,48 @@ Cloudflare-Einstellungen und Secrets unverändert lassen. Nach dem neuen grünen
 App neu laden, „Neue Abrechnung“ wählen und als Test absprechen, bevor echte Dateien
 in Dropbox geschrieben werden. Die mobile Bedienung wurde lokal geprüft; den Zoom
 bitte zusätzlich auf dem tatsächlich verwendeten iPhone/Android ausprobieren.
+
+
+## Version 4.4: Mannschaften, Ausgaben und iPhone-Icon
+
+Ausgabenarten: Würstchen, Brötchen, Brezeln, Schnitzel, Bäcker, Metzger,
+Lebensmittel und Andere Ausgabe. Bestehende Bezeichnungen wie Würstchenbrötchen
+werden beim Laden als eigene Bezeichnung erhalten; ein früherer gemeinsamer Betrag
+wird nicht automatisch aufgeteilt.
+
+Mannschaft 1 ist Pflicht, Mannschaft 2 optional. In beiden Feldern ist eine eigene
+Gruppe möglich. Senioren zuerst: Damen 1, Herren, Damen 2, Damen 3. Danach männliche
+und weibliche A-, B-, C-, D-, E-Jugend, gemischte F-Jugend und Minis. Zwei ausgewählte
+Teams werden als „Damen 1 / Herren“ gemeinsam in PDF und JSON geführt. Dateinamen
+ersetzen den Schrägstrich durch einen Unterstrich. Auswahlen und eigene Gruppen
+werden im lokalen Entwurf gespeichert. Identische doppelte Auswahlen werden abgewiesen.
+Neue Abrechnungen werden unter V4_4 gespeichert. Bestehende offene Vorgänge behalten
+ihre alten PDF-Fassungen und Speicherorte.
+
+Die öffentliche Version 4.3 wurde geprüft: Ihr Icon-Verweis und ihre PNG-Datei waren
+korrekt erreichbar (HTTP 200, image/png, 180×180), die PNG hatte Transparenz.
+Die tatsächliche Ursache der Anzeige am betroffenen iPhone konnte nicht festgestellt
+werden. 4.4 liefert zusätzlich ein geschlossenes, rotes Home-Icon, die Standarddateien
+/apple-touch-icon.png und /apple-touch-icon-precomposed.png sowie ein Webmanifest mit
+192er- und 512er-Icons. Die Website verweist mit einer neuen Versionskennung auf das
+Icon. Die Darstellung auf dem tatsächlichen iPhone muss nach dem Update geprüft werden.
+Das Wappen innerhalb der App und im PDF bleibt außen transparent.
+
+iPhone-Test nach erfolgreicher Bereitstellung:
+1. Offene Übermittlungen zuerst abschließen.
+2. Bisherige Home-Bildschirm-Verknüpfung entfernen.
+3. Die normale Startadresse https://tvb-hallenverkauf.pages.dev/ direkt in Safari
+   öffnen und neu laden, nicht in einem eingebetteten Browser eines Messengers.
+4. Teilen → Zum Home-Bildschirm. Die Icon-Vorschau prüfen und dann hinzufügen.
+   Falls Safari eine Auswahl „Als Web-App öffnen“ anbietet, diese aktivieren.
+5. Falls weiterhin ein falsches Icon erscheint, iOS-Version und Screenshot der
+   Hinzufügen-Vorschau melden. Keine Browserdaten löschen.
+
+Apple-Referenz:
+https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+
+Die Einstellungen bei Cloudflare bleiben unverändert. Das neue vollständige Paket
+wie bisher gemeinsam in GitHub hochladen und committen. Anschließend den neuesten
+grünen Cloudflare-Build abwarten. Die tatsächliche iPhone-Installation konnte lokal
+nicht getestet werden; Menü, zwei Mannschaften, freie Gruppen, Neuladen, Bestätigung,
+Downloads und Icon-Dateiabruf wurden im getrennten Browser getestet.

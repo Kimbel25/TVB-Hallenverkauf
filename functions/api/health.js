@@ -10,7 +10,7 @@ export function onRequestGet({ env }) {
 
   return Response.json({
     app: "TVB Hallenverkauf",
-    version: "4.3",
+    version: "4.4",
     server: "online",
     dropbox: {
       credentialsConfigured:

@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "TVB Hallenverkauf",
+  "short_name": "TVB",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#b8091a",
+  "icons": [
+    {
+      "src": "/assets/app-icon-192-v44.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/app-icon-512-v44.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
