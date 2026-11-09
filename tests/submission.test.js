@@ -163,3 +163,80 @@ test('only final PDF upload permits Dropbox notifications',async()=>withDropbox(
  assert.ok(uploads.find(a=>!a.mute).path.endsWith('.pdf'));
  assert.ok(uploads.filter(a=>!a.path.endsWith('.pdf')).every(a=>a.mute));
 }));
+
+import {berechneKasse,validiereKasse,STUECKELUNG} from '../lib/kasse.js';
+function cashFixture(id='00000000-0000-4000-8000-000000000010'){
+ const input=fixture(id);input.abrechnung.version='5.0';
+ input.abrechnung.kasse={modus:'betrag',bestand:400,sonstigeEinnahmen:20,einnahmenText:'Spende'};
+ return input;
+}
+test('paper example 7 November: 386.40 counted, 56.90 drinks, team 100, department 99.50',()=>{
+ const input=cashFixture();input.abrechnung.ausgaben=[];input.abrechnung.kasse={modus:'betrag',bestand:386.40,sonstigeEinnahmen:0,einnahmenText:''};
+ const qty=[1,0,8,0,17,0,9,0,5,0,0,0,0,3,0,4];input.abrechnung.waren=qty.map(anzahl=>({anzahl}));
+ const d=validieren(input),a=d.kassenabrechnung;
+ assert.equal(d.summen.getraenke,56.9);assert.equal(a.verkaufCent,25640);assert.equal(a.endbestandCent,32950);
+ assert.equal(a.gewinnCent,19950);assert.equal(a.mannschaftCent,10000);assert.equal(a.abteilungCent,9950);
+});
+test('paper example 8 November corrects the handwritten one-euro arithmetic discrepancy',()=>{
+ const input=cashFixture();input.abrechnung.ausgaben=[];input.abrechnung.kasse={modus:'betrag',bestand:431,sonstigeEinnahmen:0,einnahmenText:''};
+ input.abrechnung.waren=[0,0,3,1,1,0,8,0,11,0,7,0,1,12,0,0].map(anzahl=>({anzahl}));
+ const d=validieren(input),a=d.kassenabrechnung;
+ assert.equal(d.summen.getraenke,57.5);assert.equal(a.verkaufCent,30100);assert.equal(a.endbestandCent,37350);
+ assert.equal(a.gewinnCent,24350);assert.equal(a.mannschaftCent,12000);assert.equal(a.abteilungCent,12350);
+});
+test('expenses reconstruct sales once, donations are already included in counted cash',()=>{
+ const a=berechneKasse(40000,5000,6000,2000);
+ assert.equal(a.zwischensummeCent,45000);assert.equal(a.verkaufCent,30000);assert.equal(a.endbestandCent,34000);
+ assert.equal(a.gewinnCent,21000);assert.equal(a.mannschaftCent,10500);assert.equal(a.abteilungCent,10500);
+ assert.equal(a.bestandCent-a.getraenkeCent-a.mannschaftCent-a.abteilungCent,13000);
+});
+test('rounding is nearest five euros with halfway upwards and residual never lost',()=>{
+ for(const [profit,team]of[[499,0],[500,500],[501,500],[1499,500],[1500,1000],[1501,1000]]){
+  assert.equal(berechneKasse(13000+profit,0,0,0).mannschaftCent,team);
+ }
+ for(let profit=0;profit<200000;profit+=37){
+  const a=berechneKasse(13000+profit,0,0,0);
+  assert.equal(a.mannschaftCent%500,0);assert.equal(a.mannschaftCent+a.abteilungCent,profit);
+  assert.ok(a.abteilungCent>=0);assert.ok(Math.abs(a.mannschaftCent-profit/2)<=250);
+ }
+ const a=berechneKasse(10000,0,2000,0);assert.equal(a.gewinnCent,-5000);
+ assert.equal(a.fehlbetragCent,5000);assert.equal(a.uebertragCent,8000);assert.equal(a.wechselgeldSollCent,13000);assert.equal(a.mannschaftCent,0);assert.equal(a.abteilungCent,0);
+});
+test('denomination count is recomputed and forged total is ignored',()=>{
+ const k=validiereKasse({modus:'stueckelung',bestand:99999,stueckelung:[0,0,2,3,1,1,1,0,1,0,2,0,0,0,0],sonstigeEinnahmen:0,einnahmenText:''});
+ assert.equal(k.bestand,386.4);
+ const input=cashFixture();input.abrechnung.kasse={...k,bestand:1};input.abrechnung.kassenabrechnung={mannschaftCent:999999};
+ const d=validieren(input);assert.equal(d.kasse.bestand,386.4);assert.notEqual(d.kassenabrechnung.mannschaftCent,999999);
+});
+test('missing cash, invalid precision, negative sums and invalid denomination counts are rejected',()=>{
+ for(const change of [k=>delete k.bestand,k=>k.bestand=null,k=>k.bestand='400',k=>k.bestand=-1,k=>k.bestand=.001,
+   k=>k.sonstigeEinnahmen=-1,k=>k.einnahmenText='',k=>{k.modus='stueckelung';k.stueckelung=Array(15).fill(.5);},k=>k.modus='invalid']){
+  const input=cashFixture();change(input.abrechnung.kasse);assert.throws(()=>validieren(input));
+ }
+ const input=cashFixture();delete input.abrechnung.kasse;assert.throws(()=>validieren(input));
+});
+test('5.0 preview equals uploaded report; folder and file have matching human names',async()=>withDropbox(async fake=>{
+ const input=cashFixture();input.abrechnung.mannschaft='Damen 1 / Herren';
+ const {handle}=await import('../functions/api/submit.js');
+ const preview=await handle({env,request:new Request('https://example.test/api/preview',{method:'POST',headers:{Origin:'https://example.test','Content-Type':'application/json'},body:JSON.stringify(input)})},true);
+ assert.equal(preview.status,200);const bytes=new Uint8Array(await preview.arrayBuffer());assert.equal(fake.files.size,0);
+ const result=await send(input);assert.equal(result.status,200);assert.equal(result.data.version,'5.0');
+ const pair=[...fake.files.entries()].find(([p])=>p.endsWith('.pdf'));
+ assert.equal(pair[0],'/Abrechnungen/V5_0/2026-11-03_Hallenverkauf_Damen 1 _ Herren/2026-11-03_Hallenverkauf_Damen 1 _ Herren.pdf');
+ assert.deepEqual(bytes,pair[1]);assert.equal((await send(input)).status,200);assert.equal(fake.files.size,4);
+ const changed=structuredClone(input);changed.abrechnung.datum='2026-11-04';assert.equal((await send(changed)).status,409);
+ await writeFile('tmp/pdfs/v50.pdf',bytes);
+}));
+test('two distinct IDs on same date/team receive separate stable human folders',async()=>withDropbox(async fake=>{
+ const a=cashFixture(),b=cashFixture('00000000-0000-4000-8000-000000000011');
+ const results=await Promise.all([send(a),send(b)]);assert.ok(results.every(r=>r.status===200));
+ const paths=[...fake.files.keys()].filter(p=>p.endsWith('.pdf'));assert.equal(paths.length,2);
+ assert.ok(paths.some(p=>p.includes('Damen 1 (2)/2026-11-03_Hallenverkauf_Damen 1 (2).pdf')));
+ const before=[...fake.files.keys()].sort();await send(a);await send(b);assert.deepEqual([...fake.files.keys()].sort(),before);
+}));
+test('partial 5.0 upload resumes same readable folder without duplicate PDF',async()=>withDropbox(async fake=>{
+ fake.failPdf=3;const input=cashFixture();assert.equal((await send(input)).status,503);
+ assert.equal([...fake.files.keys()].filter(p=>p.endsWith('.json')).length,1);
+ assert.equal((await send(input)).status,200);assert.equal([...fake.files.keys()].filter(p=>p.endsWith('.pdf')).length,1);
+ assert.ok(![...fake.files.keys()].some(p=>p.includes(' (2)')));
+}));

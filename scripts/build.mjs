@@ -1,4 +1,4 @@
-import {mkdir,copyFile,rm} from 'node:fs/promises';
+import {mkdir,copyFile,rm,readFile,writeFile} from 'node:fs/promises';
 // Ausschließlich dieser erzeugte Ordner wird als Website veröffentlicht.
 await rm('public',{recursive:true,force:true});
 await mkdir('public/assets/fonts',{recursive:true});
@@ -12,3 +12,6 @@ for(const name of ['NotoSans.deflate','OFL.txt']) {
 }
 await copyFile('_headers','public/_headers');
 await copyFile('_routes.json','public/_routes.json');
+
+const kasse=(await readFile('lib/kasse.js','utf8')).replace(/^export /gm,'');
+await writeFile('public/assets/kasse.js','(()=>{\n'+kasse+'\nglobalThis.TVBKasse={ANFANG_CENT,STUECKELUNG,geldCent,validiereKasse,berechneKasse};\n})();');

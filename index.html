@@ -60,6 +60,9 @@ button{font:inherit;border:0;border-radius:12px;padding:14px 17px;cursor:pointer
 .check{display:flex;gap:10px;align-items:flex-start;margin-top:15px}
 .check input{width:20px;height:20px;flex-shrink:0;accent-color:#b8091a}
 .check label{margin:2px 0;font-weight:400}
+#kassenWarnung{color:#9d0716;font-size:14px;line-height:1.5}
+#kassenAuswertung .total{font-size:13px;padding:12px;margin-top:5px}
+#kassenAuswertung .total b{font-size:17px}
 .status{font-size:13px;color:#666;text-align:center;margin-top:12px}
 footer{text-align:center;font-size:12px;color:#777;padding:20px}
 @media print{
@@ -78,7 +81,7 @@ input,textarea{border:0;padding:4px}
 <header>
 <img class="wappen" src="/assets/tvb-wappen.svg" alt="Wappen des Turnverein Birkenfeld 1848" width="90" height="90">
 <h1>TVB Hallenverkauf<br><span style="font-size:17px">Saison 2026/2027</span></h1>
-<p>Turnverein Birkenfeld · Abteilung Handball · Version 4.5</p>
+<p>Turnverein Birkenfeld · Abteilung Handball · Version 5.0</p>
 </header>
 <main>
 <section>
@@ -98,7 +101,7 @@ input,textarea{border:0;padding:4px}
 </section>
 
 <section>
-<h2>3. Sonstige Ausgaben</h2>
+<h2>3. Ausgaben aus der Kasse</h2>
 <p class="note">Bezeichnung aus den Vorschlägen auswählen oder einen eigenen Text eingeben.</p>
 
 <div id="ausgaben"></div>
@@ -110,11 +113,26 @@ input,textarea{border:0;padding:4px}
 </div>
 </section>
 
+<section id="kasseAbschnitt">
+<h2>4. Kasse zählen</h2>
+<div class="total"><span>Kassenbestand zu Beginn (fest)</span><b>130,00 €</b></div>
+<p class="note">Zähle nach dem Verkauf und nach den bereits entnommenen sonstigen Ausgaben. Getränkegeld und die Auszahlungen an Mannschaft und Abteilung dürfen noch nicht entnommen sein.</p>
+<div class="field"><label for="zaehlmodus">Art der Kassenzählung</label><select id="zaehlmodus"><option value="betrag">Gezählten Gesamtbetrag eingeben</option><option value="stueckelung">Scheine und Münzen einzeln zählen</option></select></div>
+<div class="field" id="direktZaehlung"><label for="kassenbestand">Bestand nach Kassenzählung (€)</label><input id="kassenbestand" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" placeholder="Gezählten Betrag eingeben"></div>
+<div id="stueckelungBlock" hidden><p class="note">Für jede Sorte die Anzahl eingeben. Die App addiert den Bestand automatisch.</p><div id="stueckelungFelder"></div></div>
+<div class="total"><span>Gezählter Bestand</span><b id="zaehlSumme">–</b></div>
+<div class="field"><label for="sonstigeEinnahmen">Sonstige Bareinnahmen / Spenden (€)</label><input id="sonstigeEinnahmen" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" value="0"></div>
+<p class="note">Diese Einnahmen müssen im gezählten Bestand bereits enthalten sein. Sie werden separat ausgewiesen und nicht nochmals zum Bargeld addiert.</p>
+<div class="field"><label for="einnahmenText">Beschreibung der sonstigen Einnahmen</label><input id="einnahmenText" maxlength="200" placeholder="Zum Beispiel: Spende für den Hallenverkauf"></div>
+</section>
 <section>
-<h2>4. Abschluss</h2>
+<h2>5. Auswertung und Abschluss</h2>
+<div id="auswerteBlock"><p class="note">Ausgaben und Getränkemengen erfassen, Kasse zählen – die folgenden Werte werden automatisch berechnet.</p><div id="kassenAuswertung" aria-live="polite"></div><p id="kassenWarnung" role="status"></p></div>
+<div id="alteSummen" hidden>
 <div class="total"><span>Wareneinsatz Getränke</span><b id="sum1">0,00 €</b></div>
 <div class="total"><span>Sonstige Ausgaben</span><b id="sum2">0,00 €</b></div>
 <div class="total grand"><span>Gesamtausgaben</span><b id="gesamt">0,00 €</b></div>
+</div>
 <div class="field"><label for="bemerkung">Bemerkungen</label><textarea id="bemerkung" rows="3" placeholder="Optional"></textarea></div>
 <div class="actions">
 <button class="primary" onclick="pdfErstellen()">PDF ansehen / herunterladen</button>
@@ -126,7 +144,7 @@ input,textarea{border:0;padding:4px}
 
 
 <section>
-  <h2>5. Abrechnung übermitteln</h2>
+  <h2>6. Abrechnung übermitteln</h2>
   <p class="note">
     Die fertige Abrechnung wird sicher an den
     Kassenwart des TV Birkenfeld übertragen.
@@ -156,13 +174,14 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027 · Version 4.5</footer>
+<footer>Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027 · Version 5.0</footer>
 
 <dialog id="erfolgDialog" aria-labelledby="erfolgTitel">
 <h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
 <p>Deine Abrechnung wurde übermittelt. PDF und JSON sind in Dropbox bestätigt gespeichert.</p>
 <button class="primary" autofocus onclick="document.getElementById('erfolgDialog').close()">OK, verstanden</button>
 </dialog>
+<script src="/assets/kasse.js?v=5.0"></script>
 <script>
 const artikel=[
 ["Bier/Radler/Alkoholfrei – 20er Kasten",16],
@@ -259,7 +278,7 @@ desc.value=a.text||"";
 desc.setAttribute("aria-label","Ausgabe Bezeichnung");
 desc.addEventListener("input",()=>{ausgaben[i].text=desc.value;speichern();});
 const choice=document.createElement("select");choice.setAttribute("aria-label","Ausgabe auswählen");
-const labels=["Bitte auswählen …","Würstchen","Brötchen","Brezeln","Schnitzel","Bäcker","Metzger","Lebensmittel","Andere Ausgabe …"];
+const labels=["Bitte auswählen …","Würstchen","Brötchen","Aufschnitt","Brezeln","Schnitzel","Bäcker","Metzger","Lebensmittel","Andere Ausgabe …"];
 labels.forEach((label,j)=>{const option=document.createElement("option");option.value=j===0?"":j===labels.length-1?"custom":label;option.textContent=label;choice.append(option);});
 const known=labels.slice(1,-1).includes(a.text);
 choice.value=known?a.text:a.text?"custom":"";desc.hidden=choice.value!=="custom";
@@ -285,6 +304,65 @@ function addAusgabe(){
 ausgaben.push({text:"",betrag:0});
 renderAusgaben();berechnen();
 }
+function kasseRoh(){
+return {modus:$('zaehlmodus').value,bestand:$('kassenbestand').value===''?null:Number($('kassenbestand').value),
+ stueckelung:TVBKasse.STUECKELUNG.map((_,i)=>Number($('stueck'+i).value||0)),
+ sonstigeEinnahmen:Number($('sonstigeEinnahmen').value||0),einnahmenText:$('einnahmenText').value};
+}
+function kasseLaden(k){
+ $('zaehlmodus').value=k?.modus==='stueckelung'?'stueckelung':'betrag';
+ $('kassenbestand').value=k?.bestand ?? '';
+ $('sonstigeEinnahmen').value=k?.sonstigeEinnahmen ?? 0;
+ $('einnahmenText').value=k?.einnahmenText || '';
+ TVBKasse.STUECKELUNG.forEach((_,i)=>{$('stueck'+i).value=k?.stueckelung?.[i]||'';});
+ $('direktZaehlung').hidden=$('zaehlmodus').value==='stueckelung';
+ $('stueckelungBlock').hidden=!$('direktZaehlung').hidden;
+}
+function kassenAuswertungAktualisieren(getraenke,sonstige){
+ const alt=storedSubmission && storedSubmission.abrechnung.version!=='5.0';
+ $('kasseAbschnitt').hidden=!!alt;$('auswerteBlock').hidden=!!alt;$('alteSummen').hidden=!alt;
+ const root=$('kassenAuswertung');root.replaceChildren();$('kassenWarnung').textContent='';
+ if(alt)return;
+ let k,a;
+ try{
+   k=TVBKasse.validiereKasse(kasseRoh());
+   a=TVBKasse.berechneKasse(Math.round(k.bestand*100),Math.round(sonstige*100),Math.round(getraenke*100),Math.round(k.sonstigeEinnahmen*100));
+ }catch(error){$('zaehlSumme').textContent='–';$('kassenWarnung').textContent=error.message;return;}
+ $('zaehlSumme').textContent=euro(k.bestand);
+ const rows=[
+ ['Kassenbestand zu Beginn (fest)',a.anfangCent],
+ ['Bestand nach Kassenzählung',a.bestandCent],
+ ['+ Bereits entnommene Ausgaben',a.ausgabenCent],
+ ['= Zwischensumme vor Ausgaben',a.zwischensummeCent],
+ ['− Kassenbestand zu Beginn',a.anfangCent],
+ ['− Sonstige Einnahmen (bereits mitgezählt)',a.sonstigeEinnahmenCent],
+ ['= Einnahmen aus Verkauf',a.verkaufCent],
+ ['Sonstige Einnahmen (separat ausgewiesen)',a.sonstigeEinnahmenCent],
+ ['Bestand nach Kassenzählung',a.bestandCent],
+ ['− Wareneinsatz Getränke (separat abführen)',a.getraenkeCent],
+ ['= Endbestand',a.endbestandCent],
+ ['− Neuer Kassenbestand / Übertrag',a.anfangCent],
+ ['= Gewinn / Verlust',a.gewinnCent],
+ ['Auszahlung Mannschaft (50 %, auf 5 € gerundet)',a.mannschaftCent],
+ ['Auszahlung Abteilung / zur Einzahlung',a.abteilungCent],
+ ['Verbleibender Kassenbestand',a.uebertragCent]
+ ];
+ for(const [label,value] of rows){const row=document.createElement('div');row.className='total'+(label.startsWith('Auszahlung')?' grand':'');const l=document.createElement('span');l.textContent=label;const v=document.createElement('b');v.textContent=euro(value/100);row.append(l,v);root.append(row);}
+ const hints=[];
+ if(a.fehlbetragCent>0)hints.push('Fehlbetrag: '+euro(a.fehlbetragCent/100)+'. Keine Gewinnauszahlung. Dieser Betrag fehlt für Getränkegeld und den neuen Kassenbestand.');
+ if(a.verkaufCent<0)hints.push('Die rechnerischen Verkaufseinnahmen sind negativ. Bitte Zählung, Ausgaben und sonstige Einnahmen prüfen.');
+ $('kassenWarnung').textContent=hints.join(' ');
+}
+TVBKasse.STUECKELUNG.forEach((wert,i)=>{
+ const row=document.createElement('div');row.className='item';
+ const label=document.createElement('label');label.htmlFor='stueck'+i;label.textContent=euro(wert/100);
+ const input=document.createElement('input');input.id='stueck'+i;input.type='number';input.min='0';input.max='100000';input.step='1';input.inputMode='numeric';input.placeholder='Anzahl';
+ input.addEventListener('input',berechnen);row.append(label,input);$('stueckelungFelder').append(row);
+});
+['kassenbestand','sonstigeEinnahmen','einnahmenText'].forEach(id=>$(id).addEventListener('input',berechnen));
+$('zaehlmodus').addEventListener('change',()=>{
+ $('direktZaehlung').hidden=$('zaehlmodus').value==='stueckelung';$('stueckelungBlock').hidden=!$('direktZaehlung').hidden;berechnen();
+});
 function berechnen(){
 const getraenke=artikel.reduce((s,a,i)=>s+a[1]*(mengen[i]||0),0);
 const sonstige=ausgaben.reduce((s,a)=>s+(Number(a.betrag)||0),0);
@@ -293,12 +371,13 @@ $("ausgabenSumme").textContent=euro(sonstige);
 $("sum1").textContent=euro(getraenke);
 $("sum2").textContent=euro(sonstige);
 $("gesamt").textContent=euro(getraenke+sonstige);
+kassenAuswertungAktualisieren(getraenke,sonstige);
 speichern();
 return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
 function daten(){
 return {
-version:"4.5",
+version:"5.0",
 datum:$("datum").value,
 mannschaft:$("mannschaft").value,
 teamAuswahl:{erste:$("team1").value,zweite:$("team2").value,eigen1:$("team1Eigen").value,eigen2:$("team2Eigen").value},
@@ -308,6 +387,7 @@ bezeichnung:a[0],anzahl:mengen[i]||0,
 einzelpreis:a[1],summe:a[1]*(mengen[i]||0)
 })),
 ausgaben:ausgaben.map(a=>({...a})),
+kasse:kasseRoh(),
 quittungen:$("quittungen").checked,
 bemerkung:$("bemerkung").value,
 summen:berechneteSummen()
@@ -333,6 +413,7 @@ teamsLaden(d);
 $("person").value=d.person||"";
 $("quittungen").checked=!!d.quittungen;
 $("bemerkung").value=d.bemerkung||"";
+kasseLaden(d.kasse);
 if(Array.isArray(d.waren))mengen=artikel.map((_,i)=>Math.max(0,Math.floor(Number(d.waren[i]?.anzahl)||0)));
 if(Array.isArray(d.ausgaben))ausgaben=d.ausgaben;
 }catch(e){}
@@ -355,6 +436,10 @@ if(ausgaben.some(a=>Number(a.betrag)>0)&&!$("quittungen").checked){
 alert("Bitte bestätigen, dass die Quittungen in der Kasse liegen.");
 return false;
 }
+if(!storedSubmission || storedSubmission.abrechnung.version==='5.0') {
+ try{TVBKasse.validiereKasse(kasseRoh());}catch(error){alert(error.message);return false;}
+ for(const a of ausgaben){try{TVBKasse.geldCent(a.betrag,'Ausgabe');}catch(error){alert(error.message);return false;}}
+}
 return true;
 }
 async function pdfErstellen(){
@@ -370,7 +455,7 @@ try {
  const blob=await response.blob();const url=URL.createObjectURL(blob);
  const link=document.createElement('a');link.href=url;
  const filename=response.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/)?.[1];
- link.download=filename?decodeURIComponent(filename):'Hallenverkauf.pdf';
+ link.download=record?.receipt?.dateien?.pdf?.name || (filename?decodeURIComponent(filename):'Hallenverkauf.pdf');
  link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
 }catch(error){alert(error.message);}finally{button.disabled=false;}
 }
@@ -397,6 +482,7 @@ teamsLaden({});
 $("person").value="";
 $("quittungen").checked=false;
 $("bemerkung").value="";
+kasseLaden();
 renderWaren();renderAusgaben();berechnen();
 }
 ["datum","mannschaft","person","quittungen","bemerkung"].forEach(id=>{
@@ -483,7 +569,7 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || !["4.1","4.2","4.3","4.4","4.5"].includes(result.version) || result.status!=="vollständig" ||
+      if(result.id!==record.id || !["4.1","4.2","4.3","4.4","4.5","5.0"].includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));

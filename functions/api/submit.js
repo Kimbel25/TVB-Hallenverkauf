@@ -52,7 +52,22 @@ export async function handle({request,env},preview=false) {
     await dropbox.folder('/Abrechnungen/V4_1');
     // Globale ID statt Datum/Mannschaft im Pfad: geänderte Daten unter gleicher ID kollidieren.
     let path = '/Abrechnungen/V4_1/' + data.id;
-    if(['4.2','4.3','4.4','4.5'].includes(data.version)) {
+    if(data.version==='5.0') {
+      const base='/Abrechnungen/V5_0';
+      await dropbox.folder(base);await dropbox.folder(base+'/_Vorgaenge');
+      await dropbox.file(base+'/_Vorgaenge/'+data.id+'.lock',json);
+      const basis=dateiname(data);let ordner;
+      for(let i=1;i<=30;i++){
+        const kandidat=basis+(i===1?'':' ('+i+')');
+        try{
+          await dropbox.file(base+'/_Vorgaenge/Ordner_'+kandidat+'.lock',new TextEncoder().encode(JSON.stringify({id:data.id})));
+          ordner=kandidat;break;
+        }catch(error){if(!(error instanceof PublicError)||error.status!==409)throw error;}
+      }
+      if(!ordner)throw new PublicError('Zu viele gleichnamige Abrechnungen. Bitte den Kassenwart kontaktieren.',409);
+      await dropbox.folder(base+'/'+ordner);
+      path=base+'/'+ordner+'/'+ordner;
+    } else if(['4.2','4.3','4.4','4.5'].includes(data.version)) {
       const base='/Abrechnungen/V'+data.version.replace('.','_');
       await dropbox.folder(base);
       await dropbox.folder(base+'/_Vorgaenge');

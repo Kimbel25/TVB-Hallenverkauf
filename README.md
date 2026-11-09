@@ -1,151 +1,131 @@
-# TVB Hallenverkauf 4.5
+# TVB Hallenverkauf 5.0
 
-## Manuelles Update
+Gemeinsame Kassen- und Ausgabenabrechnung für die Handballabteilung des
+Turnverein Birkenfeld, Saison 2026/2027.
 
-Die ZIP entpacken und ihren gesamten Inhalt in der Hauptansicht des GitHub-Repositorys
-Kimbel25/TVB-Hallenverkauf über Add file → Upload files hochladen. Vorhandene Dateien
-ersetzen und gemeinsam committen. Nicht den übergeordneten Ordner oder die ZIP hochladen.
-Cloudflare-Einstellungen und Secrets bleiben unverändert: Build `npm run build`,
-Ausgabeordner `public`. Den neuesten grünen Build abwarten und die App neu laden.
+## Manuell aktualisieren
 
-## Neu
+1. Das vollständige neue ZIP-Paket entpacken.
+2. Im GitHub-Repository Kimbel25/TVB-Hallenverkauf den gesamten entpackten Inhalt auf
+   oberster Ebene hochladen, vorhandene Dateien ersetzen und gemeinsam committen.
+   Nicht den übergeordneten Ordner oder die ZIP selbst hochladen.
+3. Cloudflare-Einstellungen und Secrets bleiben unverändert: Build `npm run build`,
+   Ausgabeverzeichnis `public`, Node.js 22 oder neuer. Den neuesten grünen Build abwarten.
+4. App neu laden. Nach Abschluss eventuell offener älterer Vorgänge „Neue Abrechnung“
+   wählen und einen mit dem Kassenwart abgestimmten Funktionstest durchführen.
+5. Die reale CPU-Zeit auf Workers Free sowie PDF und JSON nach dem Livetest prüfen.
 
-- „PDF ansehen / herunterladen“ erzeugt denselben Serverbeleg wie die Übermittlung.
-  Die Vorschau benötigt Internet, aber keinen Vereinscode. Sie schreibt nichts in Dropbox.
-- Namen wie `2026-11-04_Hallenverkauf_Damen 1.pdf`, entsprechend für JSON.
-  Ungültige Dateinamenzeichen werden ersetzt. Zwei Abrechnungen derselben Mannschaft
-  am selben Tag bleiben durch getrennte Vorgangsordner voneinander unabhängig.
-- Größere Kopfdaten, Vorgangsnummer im Fuß, Trennlinien, feste Mengenspalte,
-  hervorgehobene Schlussrechnung, transparentes Wappen.
-- Plus/Minus-Tasten für Mengen und leicht abwechselnde Zeilenhintergründe.
-- Automatische JSON-Speicherung bleibt bestehen; kein manueller JSON-Export.
+## So wird abgerechnet
 
-## Speicherung und sichere Wiederholung
+1. Hallendienst, Getränkemengen und Ausgaben aus der Kasse wie bisher erfassen.
+   Würstchen, Brötchen und Aufschnitt sind eigene Ausgabearten; weitere und freie
+   Bezeichnungen bleiben möglich. Entnommene Beträge mit Quittungen bestätigen.
+2. Nach dem Hallenverkauf die Kasse zählen. Sonstige Ausgaben sind zu diesem Zeitpunkt
+   bereits entnommen. Getränkegeld und Auszahlungen an Mannschaft und Abteilung
+   dürfen noch nicht entnommen sein.
+3. Entweder den gezählten Gesamtbetrag eingeben oder „Scheine und Münzen einzeln
+   zählen“ auswählen und die Anzahl jeder Sorte erfassen. Die Stückelung wird auch
+   auf dem Server erneut addiert; ein daneben übertragener Gesamtbetrag wird ignoriert.
+4. Sonstige Bareinnahmen, etwa eine Spende, optional gesondert angeben und beschreiben.
+   Diese müssen im gezählten Bestand bereits enthalten sein. Sie werden nicht
+   ein zweites Mal zum Bargeld addiert.
+5. Die Auswertung, den gemeinsamen PDF-Beleg und die Auszahlungen prüfen. Erst
+   danach die Abrechnung übermitteln und die Geldentnahmen entsprechend vornehmen.
 
-Neue Abrechnungen liegen unter `/Abrechnungen/V4_2/<Vorgangsnummer>/` mit den lesbaren
-Dateinamen. Unter `/Abrechnungen/V4_2/_Vorgaenge/` liegen technische `.lock`-Dateien
-mit dem festgeschriebenen Datensatz. Diese werden vor den Belegen angelegt, damit
-geänderte Namen, Mannschaften oder Daten unter derselben Nummer keine Duplikate erzeugen.
-Bitte die technischen Dateien nicht löschen oder bearbeiten. JSON und PDF werden
-weiterhin einzeln auf Pfad, Größe, Revision und Dropbox-Inhaltsprüfsumme kontrolliert.
-Erfolg wird erst nach Bestätigung beider Dateien angezeigt. Wiederholungen verwenden
-dieselbe Nummer und denselben Datensatz; abweichende Inhalte werden nicht überschrieben.
+Die App führt keine Zahlungen und keine Banküberweisung aus. Sie berechnet die
+Beträge, die für Getränke, Mannschaft und Abteilung bereitzulegen sind. Bei zwei
+Mannschaften ist der Mannschaftsbetrag der gemeinsame Anteil; eine interne weitere
+Aufteilung zwischen den beiden Mannschaften wird nicht vorgegeben.
 
-Offene 4.1-Abrechnungen behalten ihren bisherigen Beleg und Speicherort. Neue Belege
-verwenden 4.2. Bereits gespeicherte Abrechnungen werden nicht nachträglich umgestaltet.
-Nach dem Update „Neue Abrechnung“ wählen, um das neue Layout auszuprobieren.
+## Verbindliche Rechenregeln
 
-## Prüfen
+Alle Berechnungen erfolgen in ganzen Cent. Der Anfangsbestand und das benötigte
+Wechselgeld für den nächsten Hallendienst sind immer 130,00 Euro.
 
-Eine markierte Testabrechnung vorbereiten, PDF herunterladen und dann unverändert
-übermitteln. In Dropbox PDF und JSON öffnen; die Vorschau muss mit der übertragenen
-PDF übereinstimmen. Datum, Mannschaft, Ausgaben und Summen prüfen. Den Kassenwart
-informieren, dass der Test nicht verbucht werden soll.
+- Zwischensumme vor Ausgaben = gezählter Kassenbestand + bereits entnommene Ausgaben.
+- Einnahmen aus Verkauf = Zwischensumme − 130 Euro − sonstige mitgezählte Einnahmen.
+- Endbestand = gezählter Kassenbestand − Wareneinsatz Getränke.
+- Gewinn / Verlust = Endbestand − 130 Euro neues Wechselgeld.
+- Mannschaft = 50 % des positiven Gewinns, auf den nächstgelegenen 5-Euro-Betrag gerundet.
+  Genau zwischen zwei 5-Euro-Stufen wird nach oben gerundet (z. B. 2,50 → 5 Euro).
+- Abteilung = positiver Gewinn − tatsächlich gerundeter Mannschaftsbetrag.
+  So gehen keine Rest-Cent verloren; nur der Mannschaftsbetrag wird gerundet.
+- Bei Verlust gibt es keine Gewinnauszahlungen. Der fehlende Betrag für Getränkegeld
+  und den neuen 130-Euro-Bestand wird ausdrücklich angezeigt. Negative rechnerische
+  Verkaufseinnahmen werden zur Überprüfung markiert und nicht stillschweigend auf null gesetzt.
 
-Lokal: Node.js 22+, `npm test` und `npm run build`. Keine Laufzeitabhängigkeiten.
-17 Funktionstests umfassen unter anderem die Gleichheit von Vorschau und Upload,
-Dateinamen mit Umlauten, Konflikte nach Datumsänderung, Teilfehler und Wiederholung.
-Der Browser wurde zusätzlich mit simulierten Antworten geprüft. Keine echten
-Vereinsabrechnungen wurden bei den lokalen Tests gesendet.
+Browser und Server verwenden dieselbe Rechenfunktion aus lib/kasse.js. Der Server
+übernimmt keine vom Browser gelieferten Ergebniswerte oder veränderten Getränkepreise.
+Die 130 Euro, der Anteil und die Rundungsregel können nicht im Formular verändert werden.
+Eine Kassenzählung ist bei neuen 5.0-Abrechnungen Pflicht. Null Euro ist als tatsächlich
+gezählter Bestand zulässig und führt entsprechend zu einem Fehlbetrag.
 
-Dropbox-Secrets bleiben ausschließlich bei Cloudflare. Im Paket sind keine Secrets.
-Die bekannten Cloudflare-Korrekturen für fetch-Aufruf, Zeitlimit und Schriftimport
-bleiben erhalten. Auf Workers Free die reale CPU-Zeit nach dem Upload prüfen.
-Mac-Meldungen: Der PDF-Upload unterdrückt Dropbox-Benachrichtigungen nicht mehr.
-JSON und technische Dateien bleiben stumm. Die PDF wird erst nach bestätigter JSON
-hochgeladen. Dropbox entscheidet anhand seiner Desktop-Einstellungen über die Anzeige;
-eine konkrete Meldung oder deren Wortlaut ist dadurch nicht garantiert. Dropbox muss
-auf dem Mac angemeldet sein und laufen, Mitteilungen müssen in Dropbox und macOS
-erlaubt sein. Bitte mit einer neuen markierten Testabrechnung prüfen. Es wird keine
-zusätzliche E-Mail oder eigene macOS-Mitteilung versendet.
+## Gemeinsamer Auswertebogen
 
+Ein PDF enthält vorn die vollständige Kassenrechnung mit Gewinn, Auszahlungen und
+Übertrag. Dahinter stehen alle Getränkemengen und Ausgaben sowie gegebenenfalls die
+gezählten Scheine und Münzen. Normale Abrechnungen passen auf zwei A4-Seiten;
+lange Listen werden automatisch auf weitere Seiten umgebrochen. Kopf und Wappen
+bleiben druckerfreundlich. Vorschau und Übermittlung erzeugen bei unverändertem
+Datensatz bytegleiche PDF-Inhalte. Die Vorschau benötigt Internetzugang und schreibt
+keine Dropbox-Dateien. Die JSON enthält die geprüften Eingaben und Cent-Ergebnisse.
 
-## Ergänzungen 4.3
+## Lesbare Dropbox-Ordner und sichere Wiederholungen
 
-App-Icon im HTML-Head: Apple-Touch-Icon 180×180, Browser-Icon 32×32.
-Zusätzlich liegt assets/icon-100x180.png bei. Alle PNGs stammen aus dem Original-SVG.
-Die Symbole für Flaschen, Kisten und Dosen sind direkt eingebettete SVG-Zeichnungen.
-Die Originalbezeichnungen und Preise bleiben sichtbar.
+Neue Abrechnungen liegen beispielsweise hier:
 
-Die Ausgaben verwenden ein natives Auswahlmenü statt eines Datalist-Vorschlagsfelds.
-„Andere Ausgabe …“ öffnet das freie Textfeld. Die Bestätigung nennt Geldentnahme
-und Quittungen. Datum, Mannschaft und Person haben identische Feldhöhen.
-Touch-action: manipulation verhindert Doppeltipp-Zoom auf Bedienelementen, ohne
-Pinch-Zoom generell abzuschalten; die Schrift der Eingaben ist mindestens 16 px.
+Abrechnungen/V5_0/2026-11-09_Hallenverkauf_Damen 1/
+  2026-11-09_Hallenverkauf_Damen 1.pdf
+  2026-11-09_Hallenverkauf_Damen 1.json
 
-Nach bestätigtem Versand erscheint ein Dialog „Übermittlung erfolgreich“ mit einem
-OK-Button. Bei einem fehlgeschlagenen oder nur teilweise bestätigten Versand wird er
-nicht angezeigt. Die bereits ergänzte Dropbox-Mac-Benachrichtigung bleibt aktiviert.
+Bei mehreren Abrechnungen derselben Mannschaft am gleichen Datum erhalten Ordner
+und Dateien den Zusatz (2), (3) usw. Unterschiedliche Vorgänge werden nicht überschrieben.
+Zwei Mannschaften erscheinen gemeinsam; unzulässige Dateinamenzeichen werden ersetzt.
 
-Neue PDFs haben einen weißen Kopf statt des roten Flächenbalkens. Logo und wenige
-rote Überschriften bleiben erhalten. Neue Abrechnungen liegen unter V4_3, alte offene
-Vorgänge bleiben in ihren bisherigen Versionen und behalten deren bytegleiche PDFs.
-Cloudflare-Einstellungen und Secrets unverändert lassen. Nach dem neuen grünen Build
-App neu laden, „Neue Abrechnung“ wählen und als Test absprechen, bevor echte Dateien
-in Dropbox geschrieben werden. Die mobile Bedienung wurde lokal geprüft; den Zoom
-bitte zusätzlich auf dem tatsächlich verwendeten iPhone/Android ausprobieren.
+Der Unterordner _Vorgaenge enthält technische Sperrdateien für Vorgangsnummern und
+Ordnerbelegung. Diese schützen vor doppelten Ablagen und geänderten Daten unter
+derselben Nummer. Die technischen Dateien bitte nicht löschen oder bearbeiten.
+Die Auswahl eines belegten Namens ist auch bei parallelen Übermittlungen abgesichert.
+JSON und PDF werden anhand von Größe, Pfad, Revision und Dropbox-Inhaltsprüfsumme
+bestätigt. Erst wenn beide bestätigt sind, erscheint der Erfolgsdialog. Ein Teilfehler
+wird mit derselben Nummer und im gleichen lesbaren Ordner wiederholt. Nach unklarer
+Übermittlung keine Browserdaten löschen und die Abrechnung nicht auf einem anderen
+Gerät mit neuer Nummer erneut anlegen. Bei Datenkonflikt den Kassenwart kontaktieren.
 
+Vorhandene Dateien werden nicht automatisch umbenannt oder neu berechnet. Offene
+Abrechnungen früherer Versionen behalten ihre alte PDF-Fassung und ihren Speicherort
+und können ohne nachträglich erfundene Kassenzählung abgeschlossen werden.
 
-## Version 4.4: Mannschaften, Ausgaben und iPhone-Icon
+## Mac-Meldung und iPhone-Icon
 
-Ausgabenarten: Würstchen, Brötchen, Brezeln, Schnitzel, Bäcker, Metzger,
-Lebensmittel und Andere Ausgabe. Bestehende Bezeichnungen wie Würstchenbrötchen
-werden beim Laden als eigene Bezeichnung erhalten; ein früherer gemeinsamer Betrag
-wird nicht automatisch aufgeteilt.
+Nur der fertige PDF-Upload unterdrückt Dropbox-Meldungen nicht; JSON und technische
+Dateien bleiben stumm. Dropbox muss auf dem Mac laufen und Mitteilungen müssen in
+Dropbox und macOS erlaubt sein. Ob und wie Dropbox einen Hinweis zeigt, bleibt von
+seinen Einstellungen abhängig. Es wird keine E-Mail und keine eigene macOS-Meldung gesendet.
+Die bestehenden Home-Icons und Mannschaftsauswahlen mit freier Eingabe bleiben erhalten.
 
-Mannschaft 1 ist Pflicht, Mannschaft 2 optional. In beiden Feldern ist eine eigene
-Gruppe möglich. Senioren zuerst: Damen 1, Herren, Damen 2, Damen 3. Danach männliche
-und weibliche A-, B-, C-, D-, E-Jugend, gemischte F-Jugend und Minis. Zwei ausgewählte
-Teams werden als „Damen 1 / Herren“ gemeinsam in PDF und JSON geführt. Dateinamen
-ersetzen den Schrägstrich durch einen Unterstrich. Auswahlen und eigene Gruppen
-werden im lokalen Entwurf gespeichert. Identische doppelte Auswahlen werden abgewiesen.
-Neue Abrechnungen werden unter V4_4 gespeichert. Bestehende offene Vorgänge behalten
-ihre alten PDF-Fassungen und Speicherorte.
+## Abgleich mit den bereitgestellten Papierbelegen
 
-Die öffentliche Version 4.3 wurde geprüft: Ihr Icon-Verweis und ihre PNG-Datei waren
-korrekt erreichbar (HTTP 200, image/png, 180×180), die PNG hatte Transparenz.
-Die tatsächliche Ursache der Anzeige am betroffenen iPhone konnte nicht festgestellt
-werden. 4.4 liefert zusätzlich ein geschlossenes, rotes Home-Icon, die Standarddateien
-/apple-touch-icon.png und /apple-touch-icon-precomposed.png sowie ein Webmanifest mit
-192er- und 512er-Icons. Die Website verweist mit einer neuen Versionskennung auf das
-Icon. Die Darstellung auf dem tatsächlichen iPhone muss nach dem Update geprüft werden.
-Das Wappen innerhalb der App und im PDF bleibt außen transparent.
+Beleg 07.11.2026: gezählt 386,40; Ausgaben 0; Getränke 56,90; Verkauf 256,40;
+Endbestand 329,50; Gewinn 199,50; Mannschaft 100,00; Abteilung 99,50 Euro.
 
-iPhone-Test nach erfolgreicher Bereitstellung:
-1. Offene Übermittlungen zuerst abschließen.
-2. Bisherige Home-Bildschirm-Verknüpfung entfernen.
-3. Die normale Startadresse https://tvb-hallenverkauf.pages.dev/ direkt in Safari
-   öffnen und neu laden, nicht in einem eingebetteten Browser eines Messengers.
-4. Teilen → Zum Home-Bildschirm. Die Icon-Vorschau prüfen und dann hinzufügen.
-   Falls Safari eine Auswahl „Als Web-App öffnen“ anbietet, diese aktivieren.
-5. Falls weiterhin ein falsches Icon erscheint, iOS-Version und Screenshot der
-   Hinzufügen-Vorschau melden. Keine Browserdaten löschen.
+Beleg 08.11.2026: gezählt 431,00; Ausgaben 0; Getränke 57,50; Verkauf 301,00;
+korrekter Endbestand 373,50; Gewinn 243,50; Mannschaft 120,00; Abteilung 123,50 Euro.
+Die Handschrift nennt 374,50 Endbestand und 124,50 Abteilung: Das ist bei den
+abgelesenen Eingaben eine Rechendifferenz von einem Euro, die nicht übernommen wird.
+Der mitgelieferte Musterbeleg nutzt die Zahlen des ersten Belegs mit einem erfundenen Namen.
 
-Apple-Referenz:
-https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+## Prüfungen und Grenzen
 
-Die Einstellungen bei Cloudflare bleiben unverändert. Das neue vollständige Paket
-wie bisher gemeinsam in GitHub hochladen und committen. Anschließend den neuesten
-grünen Cloudflare-Build abwarten. Die tatsächliche iPhone-Installation konnte lokal
-nicht getestet werden; Menü, zwei Mannschaften, freie Gruppen, Neuladen, Bestätigung,
-Downloads und Icon-Dateiabruf wurden im getrennten Browser getestet.
+Lokal: `npm test` und `npm run build` mit Node.js 22+. Keine Laufzeitabhängigkeiten.
+Die 26 Funktionstests prüfen auch beide Papierbeispiele, Rundungsgrenzen, Spenden,
+Ausgaben, Stückelung, manipulierte Eingaben, Fehlbeträge, parallele Namenskollisionen,
+Teilübertragung, Wiederholung und gleiche Vorschau-/Upload-Inhalte. Die Bedienung wurde
+zusätzlich im getrennten Browser mit nachgebildeten Antworten geprüft. Der echte
+Dropbox-Livetest erfolgt nach der manuellen Veröffentlichung durch den Betreiber.
 
-
-## Ergänzung 4.5: Belegkopf und Abstände
-
-TVB Hallenverkauf in kräftiger Schrift, Saison 2026/2027, Turnverein Birkenfeld,
-Abteilung Handball und Version 4.5. Datum, Mannschaft und Name stehen links in einer
-festen Beschriftungsspalte; ihre Werte beginnen alle an derselben Position. Lange
-Werte werden innerhalb der Wertespalte umgebrochen. Die Gesamtsumme hat zusätzlich
-8 Punkte Abstand unter der Rechenlinie. In der App heißt das Personenfeld ebenfalls
-„Name“, der Datenschlüssel bleibt aus Kompatibilitätsgründen person.
-Neue Abrechnungen verwenden V4_5. Die PDF-Generatoren früherer Versionen bleiben
-für offene Vorgänge erhalten, damit Wiederholungen dieselben Belegbytes erzeugen.
-Die Saison ist bewusst fest 2026/2027 und muss beim Saisonwechsel angepasst werden.
-
-Absenderidentität: Es werden keine Betriebssystem-Anmeldenamen, Apple-IDs oder
-vermeintlich verifizierte Gerätenamen ausgelesen. Das frei eingegebene Namensfeld
-und der gemeinsame Vereinscode verifizieren keine individuelle Person. Eine spätere
-Zuordnung zu persönlichen Benutzerkonten erfordert eine eigene Anmeldung, etwa
-individuelle Konten oder einen bestätigten Anmeldelink. Dies ist nicht Bestandteil
-von Version 4.5.
+Zugangsdaten gehören ausschließlich in die Cloudflare-Secrets TVB_VEREINSCODE,
+DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN. Keine Werte im Paket.
+Es werden weder Betriebssystem-Anmeldenamen noch Apple-IDs ausgelesen. Der frei
+eingegebene Name und der gemeinsame Vereinscode identifizieren keine Einzelperson.
+Die Saison ist fest 2026/2027 und muss beim Saisonwechsel angepasst werden.
