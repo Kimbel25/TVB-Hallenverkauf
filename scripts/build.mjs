@@ -6,6 +6,7 @@ await copyFile('index.html','public/index.html');
 for(const name of ['apple-touch-icon.png','apple-touch-icon-precomposed.png','manifest.webmanifest']) await copyFile(name,'public/'+name);
 for(const name of ['app-icon-192-v44.png','app-icon-512-v44.png']) await copyFile('assets/'+name,'public/assets/'+name);
 for(const name of ['icon-32.png','icon-180.png','icon-100x180.png']) await copyFile('assets/'+name,'public/assets/'+name);
+await copyFile('assets/ablauf.js','public/assets/ablauf.js');
 await copyFile('assets/tvb-wappen.svg','public/assets/tvb-wappen.svg');
 for(const name of ['NotoSans.deflate','OFL.txt']) {
   await copyFile('assets/fonts/'+name,'public/assets/fonts/'+name);

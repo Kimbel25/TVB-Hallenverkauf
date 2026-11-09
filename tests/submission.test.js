@@ -165,6 +165,7 @@ test('only final PDF upload permits Dropbox notifications',async()=>withDropbox(
 }));
 
 import {berechneKasse,validiereKasse,STUECKELUNG} from '../lib/kasse.js';
+import {validiereKasse as validiereKasseLegacy} from '../lib/kasse-v50.js';
 function cashFixture(id='00000000-0000-4000-8000-000000000010'){
  const input=fixture(id);input.abrechnung.version='5.0';
  input.abrechnung.kasse={modus:'betrag',bestand:400,sonstigeEinnahmen:20,einnahmenText:'Spende'};
@@ -203,7 +204,7 @@ test('rounding is nearest five euros with halfway upwards and residual never los
  assert.equal(a.fehlbetragCent,5000);assert.equal(a.uebertragCent,8000);assert.equal(a.wechselgeldSollCent,13000);assert.equal(a.mannschaftCent,0);assert.equal(a.abteilungCent,0);
 });
 test('denomination count is recomputed and forged total is ignored',()=>{
- const k=validiereKasse({modus:'stueckelung',bestand:99999,stueckelung:[0,0,2,3,1,1,1,0,1,0,2,0,0,0,0],sonstigeEinnahmen:0,einnahmenText:''});
+ const k=validiereKasseLegacy({modus:'stueckelung',bestand:99999,stueckelung:[0,0,2,3,1,1,1,0,1,0,2,0,0,0,0],sonstigeEinnahmen:0,einnahmenText:''});
  assert.equal(k.bestand,386.4);
  const input=cashFixture();input.abrechnung.kasse={...k,bestand:1};input.abrechnung.kassenabrechnung={mannschaftCent:999999};
  const d=validieren(input);assert.equal(d.kasse.bestand,386.4);assert.notEqual(d.kassenabrechnung.mannschaftCent,999999);
@@ -239,4 +240,86 @@ test('partial 5.0 upload resumes same readable folder without duplicate PDF',asy
  assert.equal([...fake.files.keys()].filter(p=>p.endsWith('.json')).length,1);
  assert.equal((await send(input)).status,200);assert.equal([...fake.files.keys()].filter(p=>p.endsWith('.pdf')).length,1);
  assert.ok(![...fake.files.keys()].some(p=>p.includes(' (2)')));
+}));
+
+import {ARTIKEL6} from '../lib/abrechnung.js';
+import {kassiererEndpoint} from '../functions/api/submit.js';
+const cashAuth={TVB_KASSIERER_PASSWORT:'unit-cashier'};
+function nextFixture(id='00000000-0000-4000-8000-000000000060'){
+ const input=fixture(id);input.abrechnung.version='6.0';input.abrechnung.mannschaften=['Damen 1','Herren'];
+ input.abrechnung.waren=ARTIKEL6.map((_,i)=>({anzahl:i===0?2:0}));
+ input.abrechnung.kassenVerantwortung='kassierer';input.abrechnung.kasse={modus:'ausstehend',sonstigeEinnahmen:10,einnahmenText:'Spende'};
+ return input;
+}
+async function admin(payload,importieren=false,config=cashAuth){
+ const request=new Request('https://example.test/api/kassierer',{method:'POST',headers:{Origin:'https://example.test','Content-Type':'application/json'},body:JSON.stringify(payload)});
+ const response=await kassiererEndpoint({request,env:{...env,...config}},importieren);return {status:response.status,data:await response.json()};
+}
+function finalFrom(input,loaded,bestand=400){
+ return {id:input.id,abrechnung:{...loaded.data.abrechnung,kasse:{modus:'betrag',bestand,sonstigeEinnahmen:10,einnahmenText:'Spende'}},kassiererPasswort:'unit-cashier',nachweisOffen:loaded.data.nachweisOffen};
+}
+async function savedOpen(fake,input){
+ assert.equal((await send(input,{env:cashAuth})).status,200);
+ return JSON.parse(new TextDecoder().decode([...fake.files.entries()].find(([p])=>p.endsWith('.json'))[1]));
+}
+test('6.0 removes deposit and large banknotes, retaining historical catalogs',()=>{
+ assert.equal(ARTIKEL6.length,15);assert.ok(!ARTIKEL6.some(([name])=>name.includes('Pfand')));
+ assert.equal(ARTIKEL6[14][1],100);assert.deepEqual(STUECKELUNG.slice(0,3),[10000,5000,2000]);
+ const raw=nextFixture();raw.abrechnung.kassenVerantwortung='hallendienst';raw.abrechnung.kasse={modus:'stueckelung',stueckelung:Array(15).fill(0),sonstigeEinnahmen:0,einnahmenText:''};assert.throws(()=>validieren(raw));
+ raw.abrechnung.waren.push({anzahl:1});assert.throws(()=>validieren(raw));
+});
+test('open reports have no fictitious cash result or completed filename',async()=>withDropbox(async fake=>{
+ const input=nextFixture();const raw=await savedOpen(fake,input);
+ assert.equal(raw.abschlussstatus,'offen');assert.equal(raw.kasse.modus,'ausstehend');assert.ok(!('bestand'in raw.kasse));assert.ok(!('kassenabrechnung'in raw));
+ assert.equal(typeof raw.pruefung.signatur,'string');assert.ok(!JSON.stringify(raw).includes('unit-cashier'));
+ assert.ok(![...fake.files.keys()].some(p=>p.includes('_komplett')));
+ assert.equal((await send(input,{env:cashAuth})).data.abrechnungsstatus,'offen');
+ await writeFile('tmp/pdfs/v60-offen.json',JSON.stringify(raw,null,2));
+ const pdf=[...fake.files.entries()].find(([p])=>p.endsWith('.pdf'))[1];await writeFile('tmp/pdfs/v60-offen.pdf',pdf);
+}));
+test('cashier password is checked on server, unset configuration fails closed',async()=>{
+ assert.equal((await admin({kassiererPasswort:'wrong'})).status,403);
+ assert.equal((await admin({kassiererPasswort:'unit-cashier'})).status,200);
+ assert.equal((await admin({kassiererPasswort:'unit-cashier'},false,{})).status,503);
+});
+test('import verifies signatures, ignores forged derived totals, rejects modified inputs and completed files',async()=>withDropbox(async fake=>{
+ const input=nextFixture();const raw=await savedOpen(fake,input);
+ assert.equal((await admin({kassiererPasswort:'wrong',beleg:raw},true)).status,403);
+ assert.equal((await admin({kassiererPasswort:'unit-cashier',beleg:raw},true)).status,200);
+ const changed=structuredClone(raw);changed.waren[0].anzahl++;assert.equal((await admin({kassiererPasswort:'unit-cashier',beleg:changed},true)).status,400);
+ const totals=structuredClone(raw);totals.summen.gesamt=999999;
+ const normalized=await admin({kassiererPasswort:'unit-cashier',beleg:totals},true);assert.equal(normalized.status,200);assert.equal(normalized.data.abrechnung.summen.gesamt,55.45);
+ const loaded=await admin({kassiererPasswort:'unit-cashier',beleg:raw},true);
+ const final=finalFrom(input,loaded);assert.equal((await send(final,{env:cashAuth})).status,200);
+ const complete=JSON.parse(new TextDecoder().decode([...fake.files.entries()].find(([p])=>p.endsWith('_komplett.json'))[1]));
+ assert.equal((await admin({kassiererPasswort:'unit-cashier',beleg:complete},true)).status,400);
+}));
+test('cashier completes only authenticated signed input, same ID and folder, with immutable finished stage',async()=>withDropbox(async fake=>{
+ const input=nextFixture();const raw=await savedOpen(fake,input);
+ const before=new Map(fake.files);const loaded=await admin({kassiererPasswort:'unit-cashier',beleg:raw},true);
+ const final=finalFrom(input,loaded);
+ const noPassword=structuredClone(final);delete noPassword.kassiererPasswort;assert.equal((await send(noPassword,{env:cashAuth})).status,403);
+ const noProof=structuredClone(final);delete noProof.nachweisOffen;assert.equal((await send(noProof,{env:cashAuth})).status,400);
+ const modified=structuredClone(final);modified.abrechnung.person='Changed';assert.equal((await send(modified,{env:cashAuth})).status,400);
+ const result=await send(final,{env:cashAuth});assert.equal(result.status,200);assert.equal(result.data.abrechnungsstatus,'komplett');assert.equal(result.data.id,input.id);
+ const pdfPath=[...fake.files.keys()].find(p=>p.endsWith('_komplett.pdf'));assert.ok(pdfPath.includes('/2026-11-03_Hallenverkauf_Damen 1 _ Herren/'));
+ for(const [path,bytes]of before)assert.deepEqual(fake.files.get(path),bytes);
+ assert.equal(fake.files.size,8);assert.equal((await send(final,{env:cashAuth})).status,200);assert.equal(fake.files.size,8);
+ assert.equal((await send(finalFrom(input,loaded,401),{env:cashAuth})).status,409);
+ await writeFile('tmp/pdfs/v60-komplett.pdf',fake.files.get(pdfPath));
+}));
+test('two-team payout splits rounded overall share exactly in half without second rounding',async()=>withDropbox(async fake=>{
+ const input=nextFixture();input.abrechnung.kassenVerantwortung='hallendienst';input.abrechnung.kasse={modus:'betrag',bestand:372,sonstigeEinnahmen:0,einnahmenText:''};
+ const d=validieren(input);assert.equal(d.kassenabrechnung.mannschaftCent,10500);
+ assert.deepEqual(d.kassenabrechnung.auszahlungen,[{name:'Damen 1',betragCent:5250},{name:'Herren',betragCent:5250}]);
+ assert.equal((await send(input,{env:cashAuth})).status,200);
+ input.abrechnung.mannschaften=['Elterngruppe'];const single=validieren(input);assert.deepEqual(single.kassenabrechnung.auszahlungen,[{name:'Elterngruppe',betragCent:10500}]);
+}));
+test('complete 6.0 previews require cashier password and match final upload',async()=>withDropbox(async fake=>{
+ const input=nextFixture();input.abrechnung.kassenVerantwortung='hallendienst';input.abrechnung.kasse={modus:'betrag',bestand:400,sonstigeEinnahmen:0,einnahmenText:''};
+ const {handle}=await import('../functions/api/submit.js');
+ async function preview(body){return handle({env:{...env,...cashAuth},request:new Request('https://example.test/api/preview',{method:'POST',headers:{Origin:'https://example.test','Content-Type':'application/json'},body:JSON.stringify(body)})},true);}
+ assert.equal((await preview(input)).status,403);input.kassiererPasswort='unit-cashier';const response=await preview(input);assert.equal(response.status,200);
+ const bytes=new Uint8Array(await response.arrayBuffer());assert.equal(fake.files.size,0);assert.equal((await send(input,{env:cashAuth})).status,200);
+ assert.deepEqual([...fake.files.entries()].find(([p])=>p.endsWith('_komplett.pdf'))[1],bytes);
 }));

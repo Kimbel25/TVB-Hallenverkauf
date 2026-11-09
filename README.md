@@ -1,131 +1,166 @@
-# TVB Hallenverkauf 5.0
+# TVB Hallenverkauf – Version 6.0
 
-Gemeinsame Kassen- und Ausgabenabrechnung für die Handballabteilung des
-Turnverein Birkenfeld, Saison 2026/2027.
+Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027
+
+## Vor dem manuellen Hochladen: eine neue Einstellung
+
+Im Cloudflare-Projekt tvb-hallenverkauf unter Settings → Variables and Secrets
+für Production einen neuen Eintrag anlegen:
+
+Typ: Secret
+Name: TVB_KASSIERER_PASSWORT
+Wert: das gewünschte Kassierer-Passwort (Großschreibung und Leerzeichen merken)
+
+Den Wert ausschließlich dort eingeben, nicht in GitHub, HTML oder JSON.
+Danach speichern. Die vorhandenen Dropbox-Secrets und TVB_VEREINSCODE bleiben bestehen.
+TVB_SETUP_KEY gehört weiterhin nur zur vorhandenen Dropbox-Ersteinrichtung.
+Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzurichten.
 
 ## Manuell aktualisieren
 
-1. Das vollständige neue ZIP-Paket entpacken.
-2. Im GitHub-Repository Kimbel25/TVB-Hallenverkauf den gesamten entpackten Inhalt auf
-   oberster Ebene hochladen, vorhandene Dateien ersetzen und gemeinsam committen.
-   Nicht den übergeordneten Ordner oder die ZIP selbst hochladen.
-3. Cloudflare-Einstellungen und Secrets bleiben unverändert: Build `npm run build`,
-   Ausgabeverzeichnis `public`, Node.js 22 oder neuer. Den neuesten grünen Build abwarten.
-4. App neu laden. Nach Abschluss eventuell offener älterer Vorgänge „Neue Abrechnung“
-   wählen und einen mit dem Kassenwart abgestimmten Funktionstest durchführen.
-5. Die reale CPU-Zeit auf Workers Free sowie PDF und JSON nach dem Livetest prüfen.
+1. TVB-Hallenverkauf-V6.0.zip entpacken.
+2. Den gesamten Inhalt des entpackten Ordners im GitHub-Repository
+   Kimbel25/TVB-Hallenverkauf auf oberster Ebene hochladen. Alle mitgelieferten
+   Dateien ersetzen bzw. hinzufügen und gemeinsam committen. Nicht die ZIP oder
+   den umschließenden Ordner hochladen.
+3. Cloudflare baut automatisch. Build bleibt npm run build, Ausgabeverzeichnis
+   public, Node.js mindestens 22. Den neuesten grünen Build abwarten.
+   Wird das Secret erst später ergänzt, danach erneut deployen.
+4. App neu laden. Bestehende Übermittlungsversuche zuerst abschließen; anschließend
+   für den neuen Ablauf „Neue Abrechnung“ wählen.
+5. Beide nachfolgenden Abläufe mit Testdaten prüfen, einschließlich PDF und JSON
+   in Dropbox. Das Paket wurde lokal geprüft; die echte Veröffentlichung erfolgt manuell.
 
-## So wird abgerechnet
+## Weg A: Hallendienst zählt
 
-1. Hallendienst, Getränkemengen und Ausgaben aus der Kasse wie bisher erfassen.
-   Würstchen, Brötchen und Aufschnitt sind eigene Ausgabearten; weitere und freie
-   Bezeichnungen bleiben möglich. Entnommene Beträge mit Quittungen bestätigen.
-2. Nach dem Hallenverkauf die Kasse zählen. Sonstige Ausgaben sind zu diesem Zeitpunkt
-   bereits entnommen. Getränkegeld und Auszahlungen an Mannschaft und Abteilung
-   dürfen noch nicht entnommen sein.
-3. Entweder den gezählten Gesamtbetrag eingeben oder „Scheine und Münzen einzeln
-   zählen“ auswählen und die Anzahl jeder Sorte erfassen. Die Stückelung wird auch
-   auf dem Server erneut addiert; ein daneben übertragener Gesamtbetrag wird ignoriert.
-4. Sonstige Bareinnahmen, etwa eine Spende, optional gesondert angeben und beschreiben.
-   Diese müssen im gezählten Bestand bereits enthalten sein. Sie werden nicht
-   ein zweites Mal zum Bargeld addiert.
-5. Die Auswertung, den gemeinsamen PDF-Beleg und die Auszahlungen prüfen. Erst
-   danach die Abrechnung übermitteln und die Geldentnahmen entsprechend vornehmen.
+Warenmengen und sonstige Ausgaben wie bisher erfassen. „Wareneinsatz plus Getränke“
+umfasst auch Hanuta/Duplo und Chips. Pfand entfällt bei neuen Abrechnungen.
+Bei „Kasse zählen“ den Hallendienst auswählen. Erst dann erscheinen die Zählfelder.
+Gesamtbestand direkt eingeben oder Scheine und Münzen einzeln zählen. 500- und
+200-Euro-Scheine werden nicht mehr angeboten. Tatsächlich gezählte null Euro
+sind zulässig und werden als Fehlbetrag behandelt, ein leeres Feld ist keine Zählung.
 
-Die App führt keine Zahlungen und keine Banküberweisung aus. Sie berechnet die
-Beträge, die für Getränke, Mannschaft und Abteilung bereitzulegen sind. Bei zwei
-Mannschaften ist der Mannschaftsbetrag der gemeinsame Anteil; eine interne weitere
-Aufteilung zwischen den beiden Mannschaften wird nicht vorgegeben.
+Sonstige Ausgaben müssen zum Zeitpunkt der Zählung bereits entnommen sein;
+Wareneinsatz und Gewinnauszahlungen dürfen noch nicht entnommen sein.
+Spenden/sonstige Bareinnahmen sind im gezählten Bestand bereits enthalten und
+werden nur separat ausgewiesen, nicht nochmals zum Bargeld addiert.
 
-## Verbindliche Rechenregeln
+„Auswertung und Abschluss“ bleibt zugeklappt. Zum Ansehen aufklappen und mit dem
+Kassierer-Passwort freigeben. Auch die fertige PDF-Vorschau verlangt dieses Passwort.
+Die reine Übermittlung durch den Hallendienst benötigt weiterhin den Vereinscode.
+Nach bestätigtem Upload heißen PDF und JSON hinten _komplett.
 
-Alle Berechnungen erfolgen in ganzen Cent. Der Anfangsbestand und das benötigte
-Wechselgeld für den nächsten Hallendienst sind immer 130,00 Euro.
+## Weg B: Kimble soll zählen
 
-- Zwischensumme vor Ausgaben = gezählter Kassenbestand + bereits entnommene Ausgaben.
-- Einnahmen aus Verkauf = Zwischensumme − 130 Euro − sonstige mitgezählte Einnahmen.
-- Endbestand = gezählter Kassenbestand − Wareneinsatz Getränke.
-- Gewinn / Verlust = Endbestand − 130 Euro neues Wechselgeld.
-- Mannschaft = 50 % des positiven Gewinns, auf den nächstgelegenen 5-Euro-Betrag gerundet.
-  Genau zwischen zwei 5-Euro-Stufen wird nach oben gerundet (z. B. 2,50 → 5 Euro).
-- Abteilung = positiver Gewinn − tatsächlich gerundeter Mannschaftsbetrag.
-  So gehen keine Rest-Cent verloren; nur der Mannschaftsbetrag wird gerundet.
-- Bei Verlust gibt es keine Gewinnauszahlungen. Der fehlende Betrag für Getränkegeld
-  und den neuen 130-Euro-Bestand wird ausdrücklich angezeigt. Negative rechnerische
-  Verkaufseinnahmen werden zur Überprüfung markiert und nicht stillschweigend auf null gesetzt.
+1. Warenmengen, Ausgaben und gegebenenfalls sonstige Bareinnahmen erfassen.
+2. „Kimble soll zählen“ auswählen. Es wird kein Kassenbestand erfunden.
+3. Mit Vereinscode übermitteln. Die App bestätigt ausdrücklich die Ablage einer
+   OFFENEN Abrechnung. PDF und JSON liegen in Dropbox, Gewinn und Auszahlungen
+   sind noch nicht berechnet. Diese Dateinamen haben noch kein _komplett.
+4. Als Kassierer die originale offene JSON aus Dropbox auf den Computer laden.
+5. In der App „JSON-Abrechnung laden“ anklicken, den Kassierer-Bereich mit dem
+   Passwort freigeben und anschließend die offene JSON auswählen.
+6. Nach der Prüfung sind Datum, Namen, Mannschaften, Mengen, Ausgaben, Spenden
+   und Bemerkungen gesperrt. Nur noch die Kassenzählung ergänzen.
+7. „Komplette Abrechnung übermitteln“ drücken. Es werden neue PDF und JSON mit
+   _komplett im selben lesbaren Ordner und unter derselben Vorgangsnummer abgelegt.
+   Die offenen Originaldateien bleiben erhalten. Ein weiterer Vereinscode ist für
+   diesen bereits geprüften Kassierer-Abschluss nicht erforderlich.
 
-Browser und Server verwenden dieselbe Rechenfunktion aus lib/kasse.js. Der Server
-übernimmt keine vom Browser gelieferten Ergebniswerte oder veränderten Getränkepreise.
-Die 130 Euro, der Anteil und die Rundungsregel können nicht im Formular verändert werden.
-Eine Kassenzählung ist bei neuen 5.0-Abrechnungen Pflicht. Null Euro ist als tatsächlich
-gezählter Bestand zulässig und führt entsprechend zu einem Fehlbetrag.
+Der Import akzeptiert nur unveränderte, serverseitig signierte offene JSON-Dateien
+ab Version 6.0. Fertige Dateien und alte 5.0-Dateien werden nicht erneut geöffnet.
+Die mitgelieferten Muster-PDFs enthalten erfundene Namen und dienen nur der Ansicht.
+Es wird bewusst keine importierbare Muster-JSON mitgeliefert.
 
-## Gemeinsamer Auswertebogen
+Das Passwort bleibt nur für die geöffnete App im Arbeitsspeicher. Nach Neuladen
+oder „Auswertung sperren“ erneut eingeben. Der importierte Entwurf kann lokal
+weiterbearbeitet werden; das Passwort wird weder lokal gespeichert noch exportiert.
+Ein offener Übermittlungsversuch muss zuerst abgeschlossen werden, bevor eine andere
+JSON geladen werden kann. Für einen anderen Vorgang „Neue Abrechnung“ wählen.
 
-Ein PDF enthält vorn die vollständige Kassenrechnung mit Gewinn, Auszahlungen und
-Übertrag. Dahinter stehen alle Getränkemengen und Ausgaben sowie gegebenenfalls die
-gezählten Scheine und Münzen. Normale Abrechnungen passen auf zwei A4-Seiten;
-lange Listen werden automatisch auf weitere Seiten umgebrochen. Kopf und Wappen
-bleiben druckerfreundlich. Vorschau und Übermittlung erzeugen bei unverändertem
-Datensatz bytegleiche PDF-Inhalte. Die Vorschau benötigt Internetzugang und schreibt
-keine Dropbox-Dateien. Die JSON enthält die geprüften Eingaben und Cent-Ergebnisse.
+## Berechnung und Mannschaften
 
-## Lesbare Dropbox-Ordner und sichere Wiederholungen
+Anfangsbestand und neues Wechselgeld: immer 130 Euro.
+Zwischensumme = gezählter Bestand + bereits entnommene Ausgaben.
+Verkaufseinnahmen = Zwischensumme − 130 Euro − bereits mitgezählte sonstige Einnahmen.
+Endbestand = gezählter Bestand − Wareneinsatz plus Getränke.
+Gewinn/Verlust = Endbestand − 130 Euro neues Wechselgeld.
 
-Neue Abrechnungen liegen beispielsweise hier:
+Der gesamte Mannschaftsanteil beträgt 50 % des positiven Gewinns, gerundet auf
+nächstgelegene 5 Euro; genau dazwischen wird aufgerundet. Die Abteilung erhält
+den genauen Rest. Bei zwei Mannschaften wird der gerundete Gesamtanteil exakt
+halbiert und mit beiden Mannschaftsnamen ausgewiesen: beispielsweise 105 Euro
+insgesamt, je 52,50 Euro. Es gibt keine zweite 5-Euro-Rundung je Mannschaft.
+Bei einer Mannschaft steht deren Name beim Auszahlungsbetrag. Bei Verlust gibt
+es keine Gewinnauszahlung; die fehlenden Mittel werden angezeigt.
 
-Abrechnungen/V5_0/2026-11-09_Hallenverkauf_Damen 1/
-  2026-11-09_Hallenverkauf_Damen 1.pdf
-  2026-11-09_Hallenverkauf_Damen 1.json
+Die App berechnet die Entnahmen, führt aber keine Zahlungen oder Überweisungen aus.
+Der Server prüft Eingaben, Stückelung und feste Preise neu und übernimmt keine
+vom Browser vorgegebenen Rechenergebnisse. Gezählt wird in ganzen Cent.
+Der Bestand nach Kassenzählung erscheint im PDF fett. Druckfreundliches Layout,
+Wappen, freie Mannschaftseingaben, zweiter Hallendienst und Ausgabenliste bleiben erhalten.
 
-Bei mehreren Abrechnungen derselben Mannschaft am gleichen Datum erhalten Ordner
-und Dateien den Zusatz (2), (3) usw. Unterschiedliche Vorgänge werden nicht überschrieben.
-Zwei Mannschaften erscheinen gemeinsam; unzulässige Dateinamenzeichen werden ersetzt.
+## Dateien und Wiederholungen
 
-Der Unterordner _Vorgaenge enthält technische Sperrdateien für Vorgangsnummern und
-Ordnerbelegung. Diese schützen vor doppelten Ablagen und geänderten Daten unter
-derselben Nummer. Die technischen Dateien bitte nicht löschen oder bearbeiten.
-Die Auswahl eines belegten Namens ist auch bei parallelen Übermittlungen abgesichert.
-JSON und PDF werden anhand von Größe, Pfad, Revision und Dropbox-Inhaltsprüfsumme
-bestätigt. Erst wenn beide bestätigt sind, erscheint der Erfolgsdialog. Ein Teilfehler
-wird mit derselben Nummer und im gleichen lesbaren Ordner wiederholt. Nach unklarer
-Übermittlung keine Browserdaten löschen und die Abrechnung nicht auf einem anderen
-Gerät mit neuer Nummer erneut anlegen. Bei Datenkonflikt den Kassenwart kontaktieren.
+Beispiel: Abrechnungen/V6_0/2026-11-09_Hallenverkauf_Damen 1/
 
-Vorhandene Dateien werden nicht automatisch umbenannt oder neu berechnet. Offene
-Abrechnungen früherer Versionen behalten ihre alte PDF-Fassung und ihren Speicherort
-und können ohne nachträglich erfundene Kassenzählung abgeschlossen werden.
+Offen:
+2026-11-09_Hallenverkauf_Damen 1.json
+2026-11-09_Hallenverkauf_Damen 1.pdf
 
-## Mac-Meldung und iPhone-Icon
+Komplett:
+2026-11-09_Hallenverkauf_Damen 1_komplett.json
+2026-11-09_Hallenverkauf_Damen 1_komplett.pdf
 
-Nur der fertige PDF-Upload unterdrückt Dropbox-Meldungen nicht; JSON und technische
-Dateien bleiben stumm. Dropbox muss auf dem Mac laufen und Mitteilungen müssen in
-Dropbox und macOS erlaubt sein. Ob und wie Dropbox einen Hinweis zeigt, bleibt von
-seinen Einstellungen abhängig. Es wird keine E-Mail und keine eigene macOS-Meldung gesendet.
-Die bestehenden Home-Icons und Mannschaftsauswahlen mit freier Eingabe bleiben erhalten.
+Bei direkter Zählung durch den Hallendienst entstehen nur die kompletten Dateien.
+Bei Namenskollisionen erhalten getrennte Vorgänge den Zusatz (2), (3) usw.
+Zwei Mannschaften erscheinen gemeinsam. Der Ordner selbst erhält kein _komplett.
+Technische Dateien im Unterordner _Vorgaenge nicht löschen oder bearbeiten.
 
-## Abgleich mit den bereitgestellten Papierbelegen
+Je Übermittlungsstufe bestätigt die App erst dann Erfolg, wenn PDF UND JSON anhand
+von Pfad, Größe, Revision und Dropbox-Inhaltsprüfsumme geprüft sind. Bei Teilfehlern
+denselben Vorgang erneut übermitteln. Bereits bestätigte Inhalte werden wiederverwendet;
+geänderte Daten unter derselben Nummer werden abgelehnt. Nach unklarer Übermittlung
+keine Browserdaten löschen oder auf einem zweiten Gerät einen neuen Vorgang anlegen.
+Auch der fertige Kassierer-Abschluss ist nach dem ersten Versuch unveränderlich.
+Bei einem echten inhaltlichen Fehler den Kassenwart zur Berichtigung kontaktieren.
 
-Beleg 07.11.2026: gezählt 386,40; Ausgaben 0; Getränke 56,90; Verkauf 256,40;
-Endbestand 329,50; Gewinn 199,50; Mannschaft 100,00; Abteilung 99,50 Euro.
+Ältere bereits angelegte Vorgänge bleiben kompatibel: alte Preise, Pfand, Stückelung,
+PDF-Layout und Ablagepfade werden bei Wiederholungen erhalten. Ein alter noch nicht
+übermittelter Entwurf mit Pfand wird im alten Format fortgesetzt; ältere Stückelungen
+werden zur Anzeige verlustfrei in den Gesamtbetrag umgerechnet.
 
-Beleg 08.11.2026: gezählt 431,00; Ausgaben 0; Getränke 57,50; Verkauf 301,00;
-korrekter Endbestand 373,50; Gewinn 243,50; Mannschaft 120,00; Abteilung 123,50 Euro.
-Die Handschrift nennt 374,50 Endbestand und 124,50 Abteilung: Das ist bei den
-abgelesenen Eingaben eine Rechendifferenz von einem Euro, die nicht übernommen wird.
-Der mitgelieferte Musterbeleg nutzt die Zahlen des ersten Belegs mit einem erfundenen Namen.
+## Passwort und Echtheitsprüfung
 
-## Prüfungen und Grenzen
+Die Freigabe wird auf dem Server geprüft; kein fest eingebautes Passwort im Quelltext.
+Die offene Vorlage erhält einen HMAC-Nachweis. Inhaltlich geänderte Ausgangsdaten
+werden beim Import abgelehnt; zusätzlich verhindern Dropbox-Sperrdateien Änderungen
+an den Ausgangsdaten und an einer bereits begonnenen Abschlussstufe.
+Die Signatur verwendet den vorhandenen serverseitigen DROPBOX_APP_SECRET.
+Eine spätere Änderung dieses Secrets erfordert einen geplanten Umgang mit noch
+offenen Vorlagen, deren alte Signaturen danach nicht mehr gültig sind.
+Der gemeinsame Kassiererzugang ist keine persönliche Identitätsprüfung. Name und
+Betriebssystem-Anmeldename werden nicht automatisch verifiziert oder ausgelesen.
 
-Lokal: `npm test` und `npm run build` mit Node.js 22+. Keine Laufzeitabhängigkeiten.
-Die 26 Funktionstests prüfen auch beide Papierbeispiele, Rundungsgrenzen, Spenden,
-Ausgaben, Stückelung, manipulierte Eingaben, Fehlbeträge, parallele Namenskollisionen,
-Teilübertragung, Wiederholung und gleiche Vorschau-/Upload-Inhalte. Die Bedienung wurde
-zusätzlich im getrennten Browser mit nachgebildeten Antworten geprüft. Der echte
-Dropbox-Livetest erfolgt nach der manuellen Veröffentlichung durch den Betreiber.
+## Mac und iPhone
 
-Zugangsdaten gehören ausschließlich in die Cloudflare-Secrets TVB_VEREINSCODE,
-DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN. Keine Werte im Paket.
-Es werden weder Betriebssystem-Anmeldenamen noch Apple-IDs ausgelesen. Der frei
-eingegebene Name und der gemeinsame Vereinscode identifizieren keine Einzelperson.
-Die Saison ist fest 2026/2027 und muss beim Saisonwechsel angepasst werden.
+Beim PDF-Upload dürfen Dropbox-Mitteilungen erscheinen, JSON und technische Dateien
+bleiben stumm. Das gilt für offene UND komplette Belege: Eine Mac-Meldung allein
+bestätigt noch keine abgeschlossene Kassenzählung. Dafür _komplett bzw. den Status
+in der App prüfen. Dropbox muss laufen und macOS-Mitteilungen müssen erlaubt sein.
+Die vorhandenen iPhone-Home-Icons bleiben erhalten.
+
+## Prüfstand
+
+33 lokale Funktionstests: alte Versionen, Preisprüfung, Spenden, Rundungen, Fehlbeträge,
+Stückelung, parallele Ordnernamen, Teilfehler/Wiederholung, geschützte PDF-Vorschau,
+signierter Import, manipulierte Vorlagen und zweistufiger Abschluss.
+Zusätzlich Browserprüfung mit den echten lokalen Serverfunktionen und nachgebildeter
+Dropbox: beide Zählwege, Passwortprüfung, gesperrte Ausgangsdaten, Neuladen,
+Teilübertragung mit Wiederholung, Passwort nicht im Browserspeicher sowie Handyansicht.
+PDF-Beispiele und langer mehrseitiger Beleg wurden gerendert und visuell geprüft.
+Cloudflare-Pages-Functions werden lokal gebaut. Keine echten Abrechnungen hochgeladen;
+Dropbox-Livetest und reale CPU-Zeit auf Workers Free nach Veröffentlichung prüfen.
+
+Entwicklung: npm test und npm run build. Keine Laufzeitabhängigkeiten.
+Saisonwechsel erfordert Anpassung der fest eingetragenen Saison 2026/2027.
