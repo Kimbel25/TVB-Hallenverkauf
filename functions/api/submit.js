@@ -40,11 +40,11 @@ export async function handle({request,env},preview=false) {
     }
     const input = await readInput(request);
     const data = validieren(input);
-    const kassiererAbschluss=data.version==='6.0'&&data.kassenVerantwortung==='kassierer'&&data.abschlussstatus==='komplett';
-    if(kassiererAbschluss || (preview&&data.version==='6.0'&&data.abschlussstatus==='komplett'))await kassiererPruefen(input.kassiererPasswort,env);
+    const kassiererAbschluss=['6.0','6.1'].includes(data.version)&&data.kassenVerantwortung==='kassierer'&&data.abschlussstatus==='komplett';
+    if(kassiererAbschluss || (preview&&['6.0','6.1'].includes(data.version)&&data.abschlussstatus==='komplett'))await kassiererPruefen(input.kassiererPasswort,env);
     if(kassiererAbschluss && !await signaturGueltig(offeneBasis(data),input.nachweisOffen,env))throw new PublicError('Die geladene Vorlage ist verändert oder nicht gültig. Bitte die originale offene JSON laden.',400);
     if(!preview && !kassiererAbschluss && !await sameSecret(input?.vereinscode,env.TVB_VEREINSCODE)) throw new PublicError('Vereinscode ungültig.',403);
-    if(data.version==='6.0') data.pruefung={verfahren:'HMAC-SHA256',signatur:await signatur(data,env)};
+    if(['6.0','6.1'].includes(data.version)) data.pruefung={verfahren:'HMAC-SHA256',signatur:await signatur(data,env)};
     const fontResponse = await env.ASSETS.fetch(new URL('/assets/fonts/NotoSans.deflate',request.url));
     if(!fontResponse.ok) throw new Error('font');
     // Vor dem ersten Dropbox-Schreibvorgang auf vollständig erzeugbares PDF prüfen.
@@ -57,10 +57,10 @@ export async function handle({request,env},preview=false) {
     await dropbox.folder('/Abrechnungen/V4_1');
     // Globale ID statt Datum/Mannschaft im Pfad: geänderte Daten unter gleicher ID kollidieren.
     let path = '/Abrechnungen/V4_1/' + data.id;
-    if(['5.0','6.0'].includes(data.version)) {
+    if(['5.0','6.0','6.1'].includes(data.version)) {
       const base='/Abrechnungen/V'+data.version.replace('.','_');
       await dropbox.folder(base);await dropbox.folder(base+'/_Vorgaenge');
-      if(data.version==='6.0'){
+      if(['6.0','6.1'].includes(data.version)){
         await dropbox.file(base+'/_Vorgaenge/'+data.id+'.basis.lock',new TextEncoder().encode(kanonisch(offeneBasis(data))));
         await dropbox.file(base+'/_Vorgaenge/'+data.id+'.'+data.abschlussstatus+'.lock',json);
       }else await dropbox.file(base+'/_Vorgaenge/'+data.id+'.lock',json);
@@ -74,7 +74,7 @@ export async function handle({request,env},preview=false) {
       }
       if(!ordner)throw new PublicError('Zu viele gleichnamige Abrechnungen. Bitte den Kassenwart kontaktieren.',409);
       await dropbox.folder(base+'/'+ordner);
-      path=base+'/'+ordner+'/'+ordner+(data.version==='6.0'&&data.abschlussstatus==='komplett'?'_komplett':'');
+      path=base+'/'+ordner+'/'+ordner+(['6.0','6.1'].includes(data.version)&&data.abschlussstatus==='komplett'?'_komplett':'');
     } else if(['4.2','4.3','4.4','4.5'].includes(data.version)) {
       const base='/Abrechnungen/V'+data.version.replace('.','_');
       await dropbox.folder(base);
@@ -86,7 +86,7 @@ export async function handle({request,env},preview=false) {
     }
     const jsonFile = await dropbox.file(path + '.json',json);
     const pdfFile = await dropbox.file(path + '.pdf',pdf,{notify:true});
-    return reply({ok:true, version:data.version, id:data.id, status:'vollständig', ...(data.version==='6.0'?{abrechnungsstatus:data.abschlussstatus}:{}), dateien:{json:jsonFile,pdf:pdfFile}});
+    return reply({ok:true, version:data.version, id:data.id, status:'vollständig', ...(['6.0','6.1'].includes(data.version)?{abrechnungsstatus:data.abschlussstatus}:{}), dateien:{json:jsonFile,pdf:pdfFile}});
   } catch(error) {
     // Keine Zugangsdaten, Nutzdaten oder Dropbox-Antworten in Logs/Fehlermeldungen.
     if(error instanceof PublicError) return reply({ok:false,error:error.message},error.status);
@@ -108,7 +108,7 @@ export async function kassiererEndpoint(context,importieren=false){
   const input=await readInput(request);await kassiererPruefen(input.kassiererPasswort,env);
   if(!importieren)return reply({ok:true});
   const raw=input.beleg;
-  if(raw?.version!=='6.0')throw new PublicError('Bitte eine offene JSON-Abrechnung aus Version 6.0 laden. Alte fertige Abrechnungen werden nicht verändert.');
+  if(!['6.0','6.1'].includes(raw?.version))throw new PublicError('Bitte eine offene JSON-Abrechnung aus Version 6.0 oder neuer laden. Alte fertige Abrechnungen werden nicht verändert.');
   const data=validieren({id:raw.id,abrechnung:raw});
   if(data.abschlussstatus!=='offen')throw new PublicError('Diese Abrechnung ist bereits komplett. Bitte die offene Ausgangsdatei laden.');
   if(!await signaturGueltig(data,raw.pruefung?.signatur,env))throw new PublicError('Die Datei ist verändert oder ihre Echtheit konnte nicht bestätigt werden. Bitte die originale Dropbox-JSON laden.');

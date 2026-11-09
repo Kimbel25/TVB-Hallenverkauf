@@ -1,8 +1,8 @@
-# TVB Hallenverkauf – Version 6.0
+# TVB Hallenverkauf – Version 6.1
 
 Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027
 
-## Vor dem manuellen Hochladen: eine neue Einstellung
+## Cloudflare-Passwort aus Version 6.0 weiterverwenden
 
 Im Cloudflare-Projekt tvb-hallenverkauf unter Settings → Variables and Secrets
 für Production einen neuen Eintrag anlegen:
@@ -11,6 +11,8 @@ Typ: Secret
 Name: TVB_KASSIERER_PASSWORT
 Wert: das gewünschte Kassierer-Passwort (Großschreibung und Leerzeichen merken)
 
+Falls das Secret schon für Version 6.0 eingerichtet ist, nichts daran ändern.
+Nur wenn es noch fehlt, wie oben beschrieben anlegen.
 Den Wert ausschließlich dort eingeben, nicht in GitHub, HTML oder JSON.
 Danach speichern. Die vorhandenen Dropbox-Secrets und TVB_VEREINSCODE bleiben bestehen.
 TVB_SETUP_KEY gehört weiterhin nur zur vorhandenen Dropbox-Ersteinrichtung.
@@ -18,7 +20,7 @@ Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzuric
 
 ## Manuell aktualisieren
 
-1. TVB-Hallenverkauf-V6.0.zip entpacken.
+1. TVB-Hallenverkauf-V6.1.zip entpacken.
 2. Den gesamten Inhalt des entpackten Ordners im GitHub-Repository
    Kimbel25/TVB-Hallenverkauf auf oberster Ebene hochladen. Alle mitgelieferten
    Dateien ersetzen bzw. hinzufügen und gemeinsam committen. Nicht die ZIP oder
@@ -31,6 +33,16 @@ Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzuric
 5. Beide nachfolgenden Abläufe mit Testdaten prüfen, einschließlich PDF und JSON
    in Dropbox. Das Paket wurde lokal geprüft; die echte Veröffentlichung erfolgt manuell.
 
+## Neu in Version 6.1
+
+Sonstige Bareinnahmen/Spenden entfallen bei neuen Abrechnungen vollständig im
+Formular und auf dem Beleg. Der gesamte gezählte Bestand fließt in die Berechnung ein.
+Zwischen Abschnitt 1 (Hallendienst) und 2 stehen zusätzlich die Knöpfe
+„JSON-Abrechnung laden“ und „Neue Abrechnung“. Die bisherigen Knöpfe unten bleiben.
+Beim Laden ohne Freigabe öffnet sich das Passwortfeld direkt oben und erhält den Fokus.
+Passwort eingeben, „Auswertung freigeben“ drücken, danach „JSON-Datei auswählen“.
+Die Auswahl der zuständigen Person heißt jetzt „Kassierer soll zählen“.
+
 ## Weg A: Hallendienst zählt
 
 Warenmengen und sonstige Ausgaben wie bisher erfassen. „Wareneinsatz plus Getränke“
@@ -42,33 +54,33 @@ sind zulässig und werden als Fehlbetrag behandelt, ein leeres Feld ist keine Z�
 
 Sonstige Ausgaben müssen zum Zeitpunkt der Zählung bereits entnommen sein;
 Wareneinsatz und Gewinnauszahlungen dürfen noch nicht entnommen sein.
-Spenden/sonstige Bareinnahmen sind im gezählten Bestand bereits enthalten und
-werden nur separat ausgewiesen, nicht nochmals zum Bargeld addiert.
+Ein zusätzliches Feld für sonstige Bareinnahmen gibt es nicht mehr.
 
 „Auswertung und Abschluss“ bleibt zugeklappt. Zum Ansehen aufklappen und mit dem
 Kassierer-Passwort freigeben. Auch die fertige PDF-Vorschau verlangt dieses Passwort.
 Die reine Übermittlung durch den Hallendienst benötigt weiterhin den Vereinscode.
 Nach bestätigtem Upload heißen PDF und JSON hinten _komplett.
 
-## Weg B: Kimble soll zählen
+## Weg B: Kassierer soll zählen
 
-1. Warenmengen, Ausgaben und gegebenenfalls sonstige Bareinnahmen erfassen.
-2. „Kimble soll zählen“ auswählen. Es wird kein Kassenbestand erfunden.
+1. Warenmengen und Ausgaben erfassen.
+2. „Kassierer soll zählen“ auswählen. Es wird kein Kassenbestand erfunden.
 3. Mit Vereinscode übermitteln. Die App bestätigt ausdrücklich die Ablage einer
    OFFENEN Abrechnung. PDF und JSON liegen in Dropbox, Gewinn und Auszahlungen
    sind noch nicht berechnet. Diese Dateinamen haben noch kein _komplett.
 4. Als Kassierer die originale offene JSON aus Dropbox auf den Computer laden.
 5. In der App „JSON-Abrechnung laden“ anklicken, den Kassierer-Bereich mit dem
    Passwort freigeben und anschließend die offene JSON auswählen.
-6. Nach der Prüfung sind Datum, Namen, Mannschaften, Mengen, Ausgaben, Spenden
+6. Nach der Prüfung sind Datum, Namen, Mannschaften, Mengen, Ausgaben, gegebenenfalls alte Einnahmen
    und Bemerkungen gesperrt. Nur noch die Kassenzählung ergänzen.
+   Ältere vorhandene Einnahmen bleiben unverändert erhalten und erscheinen als Altbeleg-Hinweis.
 7. „Komplette Abrechnung übermitteln“ drücken. Es werden neue PDF und JSON mit
    _komplett im selben lesbaren Ordner und unter derselben Vorgangsnummer abgelegt.
    Die offenen Originaldateien bleiben erhalten. Ein weiterer Vereinscode ist für
    diesen bereits geprüften Kassierer-Abschluss nicht erforderlich.
 
 Der Import akzeptiert nur unveränderte, serverseitig signierte offene JSON-Dateien
-ab Version 6.0. Fertige Dateien und alte 5.0-Dateien werden nicht erneut geöffnet.
+aus Version 6.0 und 6.1. Fertige Dateien und alte 5.0-Dateien werden nicht erneut geöffnet.
 Die mitgelieferten Muster-PDFs enthalten erfundene Namen und dienen nur der Ansicht.
 Es wird bewusst keine importierbare Muster-JSON mitgeliefert.
 
@@ -82,7 +94,9 @@ JSON geladen werden kann. Für einen anderen Vorgang „Neue Abrechnung“ wähl
 
 Anfangsbestand und neues Wechselgeld: immer 130 Euro.
 Zwischensumme = gezählter Bestand + bereits entnommene Ausgaben.
-Verkaufseinnahmen = Zwischensumme − 130 Euro − bereits mitgezählte sonstige Einnahmen.
+Verkaufseinnahmen bei neuen Abrechnungen = Zwischensumme − 130 Euro.
+Bei importierten älteren Belegen bleibt die bisherige Berechnung mit deren
+mitgezählten sonstigen Einnahmen erhalten, ebenso deren ursprüngliches PDF-Layout.
 Endbestand = gezählter Bestand − Wareneinsatz plus Getränke.
 Gewinn/Verlust = Endbestand − 130 Euro neues Wechselgeld.
 
@@ -102,7 +116,7 @@ Wappen, freie Mannschaftseingaben, zweiter Hallendienst und Ausgabenliste bleibe
 
 ## Dateien und Wiederholungen
 
-Beispiel: Abrechnungen/V6_0/2026-11-09_Hallenverkauf_Damen 1/
+Beispiel: Abrechnungen/V6_1/2026-11-09_Hallenverkauf_Damen 1/
 
 Offen:
 2026-11-09_Hallenverkauf_Damen 1.json
@@ -152,10 +166,11 @@ Die vorhandenen iPhone-Home-Icons bleiben erhalten.
 
 ## Prüfstand
 
-33 lokale Funktionstests: alte Versionen, Preisprüfung, Spenden, Rundungen, Fehlbeträge,
+34 lokale Funktionstests: alte Versionen, Preisprüfung, Spenden, Rundungen, Fehlbeträge,
 Stückelung, parallele Ordnernamen, Teilfehler/Wiederholung, geschützte PDF-Vorschau,
 signierter Import, manipulierte Vorlagen und zweistufiger Abschluss.
-Zusätzlich Browserprüfung mit den echten lokalen Serverfunktionen und nachgebildeter
+Zusätzlich Browserprüfung der oberen Knöpfe, Passwortöffnung und fehlenden Einnahmenfelder
+sowie der echten lokalen Serverfunktionen mit nachgebildeter
 Dropbox: beide Zählwege, Passwortprüfung, gesperrte Ausgangsdaten, Neuladen,
 Teilübertragung mit Wiederholung, Passwort nicht im Browserspeicher sowie Handyansicht.
 PDF-Beispiele und langer mehrseitiger Beleg wurden gerendert und visuell geprüft.

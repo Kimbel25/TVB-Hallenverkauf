@@ -84,7 +84,7 @@ input,textarea{border:0;padding:4px}
 <header>
 <img class="wappen" src="/assets/tvb-wappen.svg" alt="Wappen des Turnverein Birkenfeld 1848" width="90" height="90">
 <h1>TVB Hallenverkauf<br><span style="font-size:17px">Saison 2026/2027</span></h1>
-<p>Turnverein Birkenfeld · Abteilung Handball · Version 6.0</p>
+<p>Turnverein Birkenfeld · Abteilung Handball · Version 6.1</p>
 </header>
 <main>
 <section>
@@ -94,6 +94,17 @@ input,textarea{border:0;padding:4px}
 <div class="field"><label for="team1">Mannschaft / Gruppe</label><select id="team1"></select><input id="team1Eigen" aria-label="Eigene Gruppe 1" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
 <div class="field"><label for="team2">Zweite Mannschaft / Gruppe (optional)</label><select id="team2"></select><input id="team2Eigen" aria-label="Eigene Gruppe 2" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
 <div class="field"><label for="person">Name</label><input id="person" placeholder="Vor- und Nachname"></div>
+</section>
+
+<section id="schnellAktionen">
+<div class="actions"><button class="secondary" id="jsonLadenOben" onclick="jsonLadenStarten()">JSON-Abrechnung laden</button><button class="secondary" id="neueAbrechnungOben" onclick="zuruecksetzen()">Neue Abrechnung</button></div>
+<details id="kassiererAnmeldung"><summary>Kassierer-Passwort eingeben</summary>
+<div class="field"><label for="kassiererPasswort">Kassierer-Passwort</label><input id="kassiererPasswort" type="password" autocomplete="off"></div>
+<button class="secondary" id="auswertungFreigeben" onclick="auswertungFreigeben()">Auswertung freigeben</button>
+<button class="secondary" id="auswertungSperren" onclick="auswertungSperren()">Auswertung sperren</button>
+<p class="note" id="authStatus" role="status">Die Auswertung wird erst nach der Passwortprüfung angezeigt.</p>
+<button class="secondary" id="jsonAuswaehlenOben" onclick="jsonLadenStarten()">JSON-Datei auswählen</button>
+<p class="note" id="importStatus" role="status"></p></details>
 </section>
 
 <section>
@@ -118,8 +129,8 @@ input,textarea{border:0;padding:4px}
 
 <section id="kasseAbschnitt">
 <h2>4. Kasse zählen</h2>
-<div class="field"><label for="zaehlVerantwortung">Wer zählt die Kasse?</label><select id="zaehlVerantwortung"><option value="">Bitte auswählen …</option><option value="hallendienst">Hallendienst zählt</option><option value="kassierer">Kimble soll zählen</option></select></div>
-<p class="note" id="kimbleHinweis" hidden>Kimble zählt später. Du übermittelst zunächst einen vorläufigen Beleg und eine offene JSON ohne Gewinnberechnung.</p>
+<div class="field"><label for="zaehlVerantwortung">Wer zählt die Kasse?</label><select id="zaehlVerantwortung"><option value="">Bitte auswählen …</option><option value="hallendienst">Hallendienst zählt</option><option value="kassierer">Kassierer soll zählen</option></select></div>
+<p class="note" id="kassiererHinweis" hidden>Der Kassierer zählt später. Du übermittelst zunächst einen vorläufigen Beleg und eine offene JSON ohne Gewinnberechnung.</p>
 <p class="note" id="importHinweis" hidden>Geprüfte JSON geladen: Nur die Kassenzählung kann ergänzt werden. Die übrigen Angaben bleiben erhalten.</p>
 <div id="kassenZaehlbereich" hidden>
 <div class="total"><span>Kassenbestand zu Beginn (fest)</span><b>130,00 €</b></div>
@@ -129,17 +140,12 @@ input,textarea{border:0;padding:4px}
 <div id="stueckelungBlock" hidden><p class="note">Für jede Sorte die Anzahl eingeben. Die App addiert den Bestand automatisch.</p><div id="stueckelungFelder"></div></div>
 <div class="total"><span>Gezählter Bestand</span><b id="zaehlSumme">–</b></div>
 </div>
-<div class="field"><label for="sonstigeEinnahmen">Sonstige Bareinnahmen / Spenden (€)</label><input id="sonstigeEinnahmen" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" value="0"></div>
-<p class="note">Diese Einnahmen müssen im gezählten Bestand bereits enthalten sein. Sie werden separat ausgewiesen und nicht nochmals zum Bargeld addiert.</p>
-<div class="field"><label for="einnahmenText">Beschreibung der sonstigen Einnahmen</label><input id="einnahmenText" maxlength="200" placeholder="Zum Beispiel: Spende für den Hallenverkauf"></div>
+<div id="alteEinnahmen" hidden><p class="note">Mitgezählte sonstige Einnahmen aus der älteren Abrechnung (bleiben erhalten): <b id="alteEinnahmenWert"></b></p><input type="hidden" id="sonstigeEinnahmen" value="0"><input type="hidden" id="einnahmenText" value=""></div>
 </section>
 <section>
 <h2>5. Abschluss</h2>
 <details id="auswertungDetails"><summary>Auswertung und Abschluss aufklappen (Kassierer)</summary>
-<div class="field"><label for="kassiererPasswort">Kassierer-Passwort</label><input id="kassiererPasswort" type="password" autocomplete="off"></div>
-<button class="secondary" id="auswertungFreigeben" onclick="auswertungFreigeben()">Auswertung freigeben</button>
-<button class="secondary" id="auswertungSperren" onclick="auswertungSperren()">Auswertung sperren</button>
-<p class="note" id="authStatus" role="status">Die Auswertung wird erst nach der Passwortprüfung angezeigt.</p>
+<button class="secondary" onclick="zeigeKassiererAnmeldung()">Kassierer-Bereich öffnen</button>
 <div id="auswerteBlock"><p class="note">Ausgaben und Warenmengen erfassen, Kasse zählen – die folgenden Werte werden automatisch berechnet.</p><div id="kassenAuswertung" aria-live="polite"></div><p id="kassenWarnung" role="status"></p></div>
 <div id="alteSummen" hidden>
 <div class="total"><span>Wareneinsatz plus Getränke</span><b id="sum1">0,00 €</b></div>
@@ -162,7 +168,6 @@ input,textarea{border:0;padding:4px}
 <p class="note">Offene JSON aus Dropbox auswählen, mit Kassierer-Passwort prüfen und die Zählung nachtragen. Das Passwort wird nicht in der JSON gespeichert.</p>
 <button class="secondary" id="jsonLadenButton" onclick="jsonLadenStarten()">JSON-Abrechnung laden</button>
 <input id="jsonDatei" type="file" accept=".json,application/json" hidden onchange="jsonDateiLaden()" aria-label="Offene JSON auswählen">
-<p class="note" id="importStatus" role="status"></p>
 </section>
 <section>
   <h2>6. Abrechnung übermitteln</h2>
@@ -195,15 +200,15 @@ input,textarea{border:0;padding:4px}
 
 
 </main>
-<footer>Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027 · Version 6.0</footer>
+<footer>Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027 · Version 6.1</footer>
 
 <dialog id="erfolgDialog" aria-labelledby="erfolgTitel">
 <h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
 <p id="erfolgText">PDF und JSON sind in Dropbox bestätigt gespeichert.</p>
 <button class="primary" autofocus onclick="document.getElementById('erfolgDialog').close()">OK, verstanden</button>
 </dialog>
-<script src="/assets/ablauf.js?v=6.0"></script>
-<script src="/assets/kasse.js?v=6.0"></script>
+<script src="/assets/ablauf.js?v=6.1"></script>
+<script src="/assets/kasse.js?v=6.1"></script>
 <script>
 const aktuelleArtikel=[
 ["Bier/Radler/Alkoholfrei – 20er Kasten",16],
@@ -331,7 +336,7 @@ ausgaben.push({text:"",betrag:0});
 renderAusgaben();berechnen();
 }
 function kasseRoh(){
-return {modus:formularVersion==='6.0'&&!wirdGezaehlt()?'ausstehend':$('zaehlmodus').value,bestand:$('kassenbestand').value===''?null:Number($('kassenbestand').value),
+return {modus:['6.0','6.1'].includes(formularVersion)&&!wirdGezaehlt()?'ausstehend':$('zaehlmodus').value,bestand:$('kassenbestand').value===''?null:Number($('kassenbestand').value),
  stueckelung:TVBKasse.STUECKELUNG.map((_,i)=>Number($('stueck'+i).value||0)),
  sonstigeEinnahmen:Number($('sonstigeEinnahmen').value||0),einnahmenText:$('einnahmenText').value};
 }
@@ -340,18 +345,19 @@ function kasseLaden(k){
  $('kassenbestand').value=k?.bestand ?? '';
  $('sonstigeEinnahmen').value=k?.sonstigeEinnahmen ?? 0;
  $('einnahmenText').value=k?.einnahmenText || '';
+ $('alteEinnahmen').hidden=!(Number(k?.sonstigeEinnahmen)>0);$('alteEinnahmenWert').textContent=euro(Number(k?.sonstigeEinnahmen)||0)+' '+(k?.einnahmenText||'');
  TVBKasse.STUECKELUNG.forEach((_,i)=>{$('stueck'+i).value=k?.stueckelung?.[i]||'';});
  $('direktZaehlung').hidden=$('zaehlmodus').value==='stueckelung';
  $('stueckelungBlock').hidden=!$('direktZaehlung').hidden;
  zustaendigkeitAnzeigen();
 }
 function kassenAuswertungAktualisieren(getraenke,sonstige){
- const alt=storedSubmission && !['5.0','6.0'].includes(storedSubmission.abrechnung.version);
+ const alt=storedSubmission && !['5.0','6.0','6.1'].includes(storedSubmission.abrechnung.version);
  $('kasseAbschnitt').hidden=!!alt;$('auswerteBlock').hidden=!!alt||!auswertungEntsperrt;$('alteSummen').hidden=!alt||!auswertungEntsperrt;
  zustaendigkeitAnzeigen();
  const root=$('kassenAuswertung');root.replaceChildren();$('kassenWarnung').textContent='';
  if(alt)return;
- if(formularVersion==='6.0'&&kasseRoh().modus==='ausstehend'){$('zaehlSumme').textContent='Noch nicht gezählt';if(auswertungEntsperrt)$('kassenWarnung').textContent='Kimble soll zählen. Eine endgültige Auswertung ist erst nach Laden der offenen JSON und Ergänzen der Zählung möglich.';return;}
+ if(['6.0','6.1'].includes(formularVersion)&&kasseRoh().modus==='ausstehend'){$('zaehlSumme').textContent='Noch nicht gezählt';if(auswertungEntsperrt)$('kassenWarnung').textContent='Der Kassierer soll zählen. Eine endgültige Auswertung ist erst nach Laden der offenen JSON und Ergänzen der Zählung möglich.';return;}
  let k,a;
  try{
    k=TVBKasse.validiereKasse(kasseRoh());
@@ -365,9 +371,9 @@ function kassenAuswertungAktualisieren(getraenke,sonstige){
  ['+ Bereits entnommene Ausgaben',a.ausgabenCent],
  ['= Zwischensumme vor Ausgaben',a.zwischensummeCent],
  ['− Kassenbestand zu Beginn',a.anfangCent],
- ['− Sonstige Einnahmen (bereits mitgezählt)',a.sonstigeEinnahmenCent],
+ ...(a.sonstigeEinnahmenCent?[['− Mitgezählte Einnahmen aus Altbeleg',a.sonstigeEinnahmenCent]]:[]),
  ['= Einnahmen aus Verkauf',a.verkaufCent],
- ['Sonstige Einnahmen (separat ausgewiesen)',a.sonstigeEinnahmenCent],
+
  ['Bestand nach Kassenzählung',a.bestandCent],
  ['− Wareneinsatz plus Getränke (separat abführen)',a.getraenkeCent],
  ['= Endbestand',a.endbestandCent],
@@ -381,7 +387,7 @@ function kassenAuswertungAktualisieren(getraenke,sonstige){
  for(const [label,value] of rows){const row=document.createElement('div');row.className='total'+(label.startsWith('Auszahlung')?' grand':'');const l=document.createElement('span');l.textContent=label;const v=document.createElement('b');v.textContent=euro(value/100);row.append(l,v);root.append(row);}
  const hints=[];
  if(a.fehlbetragCent>0)hints.push('Fehlbetrag: '+euro(a.fehlbetragCent/100)+'. Keine Gewinnauszahlung. Dieser Betrag fehlt für Getränkegeld und den neuen Kassenbestand.');
- if(a.verkaufCent<0)hints.push('Die rechnerischen Verkaufseinnahmen sind negativ. Bitte Zählung, Ausgaben und sonstige Einnahmen prüfen.');
+ if(a.verkaufCent<0)hints.push('Die rechnerischen Verkaufseinnahmen sind negativ. Bitte Zählung und Ausgaben prüfen.');
  $('kassenWarnung').textContent=hints.join(' ');
 }
 TVBKasse.STUECKELUNG.forEach((wert,i)=>{
@@ -442,9 +448,9 @@ function laden(){
 try{
 const d=JSON.parse(localStorage.getItem(key)||"null");
 if(!d)return;
-const legacy=storedSubmission&&d.version!=='6.0';
-const pfandAlt=d.version!=='6.0'&&d.waren?.[14]?.anzahl>0;
-formularVersion=legacy||pfandAlt?d.version:'6.0';
+const legacy=(storedSubmission&&!['6.0','6.1'].includes(d.version))||(!['6.0','6.1'].includes(d.version)&&Number(d.kasse?.sonstigeEinnahmen)>0);
+const pfandAlt=!['6.0','6.1'].includes(d.version)&&d.waren?.[14]?.anzahl>0;
+formularVersion=legacy||pfandAlt||['6.0','6.1'].includes(d.version)?d.version:'6.1';
 artikel=aktuelleArtikel;
 if(legacy||pfandAlt){artikel=[...aktuelleArtikel];artikel.splice(14,0,['Pfand – Flasche',.25]);if(d.waren?.length===15)artikel=artikel.slice(0,15);}
 $("datum").value=d.datum||"";
@@ -453,9 +459,9 @@ $("person").value=d.person||"";
 $("quittungen").checked=!!d.quittungen;
 $("bemerkung").value=d.bemerkung||"";
 kasseLaden(ladeKasseMitMigration(d.kasse,d.version));
-if(d.version==='6.0')$('zaehlVerantwortung').value=d.kassenVerantwortung||'';
+if(['6.0','6.1'].includes(d.version))$('zaehlVerantwortung').value=d.kassenVerantwortung||'';
 zustaendigkeitAnzeigen();
-if(Array.isArray(d.waren))mengen=artikel.map((_,i)=>Math.max(0,Math.floor(Number(d.waren[d.version!=='6.0'&&formularVersion==='6.0'&&i>=14?i+1:i]?.anzahl)||0)));
+if(Array.isArray(d.waren))mengen=artikel.map((_,i)=>Math.max(0,Math.floor(Number(d.waren[!['6.0','6.1'].includes(d.version)&&['6.0','6.1'].includes(formularVersion)&&i>=14?i+1:i]?.anzahl)||0)));
 if(Array.isArray(d.ausgaben))ausgaben=d.ausgaben;
 }catch(e){}
 }
@@ -477,8 +483,8 @@ if(ausgaben.some(a=>Number(a.betrag)>0)&&!$("quittungen").checked){
 alert("Bitte bestätigen, dass die Quittungen in der Kasse liegen.");
 return false;
 }
-if(!storedSubmission || ['5.0','6.0'].includes(storedSubmission.abrechnung.version)) {
- if(formularVersion==='6.0'&&!['hallendienst','kassierer'].includes($('zaehlVerantwortung').value)){alert('Bitte auswählen, wer die Kasse zählt.');return false;}
+if(!storedSubmission || ['5.0','6.0','6.1'].includes(storedSubmission.abrechnung.version)) {
+ if(['6.0','6.1'].includes(formularVersion)&&!['hallendienst','kassierer'].includes($('zaehlVerantwortung').value)){alert('Bitte auswählen, wer die Kasse zählt.');return false;}
  try{const raw=kasseRoh();TVBKasse.validiereKasse(raw.modus==='ausstehend'?{...raw,modus:'betrag',bestand:0}:raw);}catch(error){alert(error.message);return false;}
  for(const a of ausgaben){try{TVBKasse.geldCent(a.betrag,'Ausgabe');}catch(error){alert(error.message);return false;}}
 }
@@ -489,7 +495,7 @@ if(!validieren())return;
 const record=storedSubmission;
 const d=record?.abrechnung||daten();
 const id=record?.id||previewId;
-if(d.version==='6.0'&&d.kasse.modus!=='ausstehend'&&!kassiererPasswort){zeigeKassiererAnmeldung('Für die vollständige PDF-Vorschau bitte die Auswertung freigeben. Übermitteln ist auch ohne diese Vorschau möglich.');return;}
+if(['6.0','6.1'].includes(d.version)&&d.kasse.modus!=='ausstehend'&&!kassiererPasswort){zeigeKassiererAnmeldung('Für die vollständige PDF-Vorschau bitte die Auswertung freigeben. Übermitteln ist auch ohne diese Vorschau möglich.');return;}
 const button=document.querySelector('button[onclick="pdfErstellen()"]');button.disabled=true;
 try {
  const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,abrechnung:d,...schutzDaten()})});
@@ -511,7 +517,7 @@ if(!confirm("Alle Eingaben löschen und eine neue Abrechnung beginnen?"))return;
 clearTimeout(saveTimer);
 localStorage.removeItem(sendKey);
 localStorage.removeItem("tvb_pending_submission_id");
-storedSubmission=null;importKontext=null;localStorage.removeItem(importKey);formularVersion='6.0';artikel=aktuelleArtikel;auswertungEntsperrt=false;kassiererPasswort='';$('auswertungDetails').open=false;$('authStatus').textContent='Die Auswertung wird erst nach Passwortprüfung angezeigt.';$('jsonDatei').hidden=true;
+storedSubmission=null;importKontext=null;localStorage.removeItem(importKey);formularVersion='6.1';artikel=aktuelleArtikel;auswertungEntsperrt=false;kassiererPasswort='';$('auswertungDetails').open=false;$('kassiererAnmeldung').open=false;$('authStatus').textContent='Die Auswertung wird erst nach Passwortprüfung angezeigt.';$('jsonDatei').hidden=true;
 previewId=crypto.randomUUID();
 lockForm(false);
 $("sendenButton").disabled=false;
@@ -538,7 +544,7 @@ laden();renderWaren();renderAusgaben();berechnen();lockForm(false);
 
 function lockForm(locked) {
   document.querySelectorAll("main input,main select,main textarea,main button").forEach(el=>{
-    if(el.closest('#kassiererWerkzeuge')||["kassiererPasswort","auswertungFreigeben","auswertungSperren"].includes(el.id)||el.id==="vereinscode" || el.id==="sendenButton" ||
+    if(el.closest('#kassiererWerkzeuge')||el.closest('#schnellAktionen')||el.getAttribute('onclick')==='zeigeKassiererAnmeldung()'||["kassiererPasswort","auswertungFreigeben","auswertungSperren"].includes(el.id)||el.id==="vereinscode" || el.id==="sendenButton" ||
        ["pdfErstellen()","zuruecksetzen()"].includes(el.getAttribute("onclick"))) return;
     const countInput=['kassenbestand','zaehlmodus'].includes(el.id)||el.id.startsWith('stueck');
     el.disabled=locked||!!(importKontext&&!countInput);
@@ -591,7 +597,7 @@ async function sendSubmission() {
     if(!record && !validieren()) return;
     const code=$("vereinscode").value.trim();
     const sendingData=record?.abrechnung||daten();
-    const imported=sendingData.version==='6.0'&&sendingData.kassenVerantwortung==='kassierer'&&sendingData.kasse.modus!=='ausstehend';
+    const imported=['6.0','6.1'].includes(sendingData.version)&&sendingData.kassenVerantwortung==='kassierer'&&sendingData.kasse.modus!=='ausstehend';
     if(imported&&!kassiererPasswort){zeigeKassiererAnmeldung('Zum Abschließen der geladenen Abrechnung bitte das Kassierer-Passwort erneut eingeben.');return;}
     if(!imported&&!code) {alert('Bitte den Vereinscode eingeben.');return;}
     if(!record) record={id:previewId,abrechnung:daten(),state:"pending",attempts:0};
@@ -616,15 +622,15 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || !["4.1","4.2","4.3","4.4","4.5","5.0","6.0"].includes(result.version) || result.status!=="vollständig" ||
+      if(result.id!==record.id || !["4.1","4.2","4.3","4.4","4.5","5.0","6.0","6.1"].includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));
       restoreSubmission(record);
       $("vereinscode").value="";
       const offen=result.abrechnungsstatus==='offen';
-      status.textContent=(offen?'Vorläufiger Beleg und offene JSON erfolgreich übermittelt. Kimble soll noch zählen. Vorgang: ':'Komplette Abrechnung: PDF und JSON erfolgreich in Dropbox bestätigt. Vorgang: ')+record.id;
-      $('erfolgText').textContent=offen?'Der vorläufige Beleg und die offene JSON sind gespeichert. Kimble muss die Kassenzählung noch ergänzen. Die Abrechnung ist noch nicht komplett.':'Die komplette Abrechnung wurde mit dem Zusatz _komplett in Dropbox gespeichert.';
+      status.textContent=(offen?'Vorläufiger Beleg und offene JSON erfolgreich übermittelt. Der Kassierer soll noch zählen. Vorgang: ':'Komplette Abrechnung: PDF und JSON erfolgreich in Dropbox bestätigt. Vorgang: ')+record.id;
+      $('erfolgText').textContent=offen?'Der vorläufige Beleg und die offene JSON sind gespeichert. Der Kassierer muss die Kassenzählung noch ergänzen. Die Abrechnung ist noch nicht komplett.':'Die komplette Abrechnung wurde mit dem Zusatz _komplett in Dropbox gespeichert.';
       $("erfolgDialog").showModal();
     } catch(error) {
       status.textContent="Nicht als erfolgreich bestätigt: "+error.message+

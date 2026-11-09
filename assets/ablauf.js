@@ -1,21 +1,21 @@
 // Kassierer-Freigabe bleibt nur im Arbeitsspeicher. Kein Passwort im Browser-Speicher.
-let auswertungEntsperrt=false,kassiererPasswort='',formularVersion='6.0';
+let auswertungEntsperrt=false,kassiererPasswort='',formularVersion='6.1';
 let importKontext=null;
 const importKey='tvb_kassierer_import_v6';
 try{const c=JSON.parse(localStorage.getItem(importKey)||'null');if(c&&typeof c.id==='string'&&typeof c.nachweisOffen==='string')importKontext=c;}catch{}
 function schutzDaten(){return {kassiererPasswort,nachweisOffen:importKontext?.nachweisOffen};}
 function wirdGezaehlt(){
  return $('zaehlVerantwortung').value==='hallendienst'||!!importKontext||
-  !!(storedSubmission?.abrechnung.version==='6.0'&&storedSubmission.abrechnung.kasse?.modus!=='ausstehend');
+  !!(['6.0','6.1'].includes(storedSubmission?.abrechnung.version)&&storedSubmission.abrechnung.kasse?.modus!=='ausstehend');
 }
 function zustaendigkeitAnzeigen(){
- const zaehlen=wirdGezaehlt()||formularVersion!=='6.0';
+ const zaehlen=wirdGezaehlt()||!['6.0','6.1'].includes(formularVersion);
  $('kassenZaehlbereich').hidden=!zaehlen;
- $('kimbleHinweis').hidden=zaehlen||$('zaehlVerantwortung').value!=='kassierer';
+ $('kassiererHinweis').hidden=zaehlen||$('zaehlVerantwortung').value!=='kassierer';
  $('importHinweis').hidden=!importKontext;
 }
 function zeigeKassiererAnmeldung(text='Bitte das Kassierer-Passwort eingeben.'){
- $('auswertungDetails').open=true;$('authStatus').textContent=text;$('kassiererPasswort').focus();
+ $('kassiererAnmeldung').open=true;$('authStatus').textContent=text;$('kassiererAnmeldung').scrollIntoView({behavior:'smooth',block:'center'});$('kassiererPasswort').focus({preventScroll:true});
 }
 async function kassiererApi(path,payload){
  const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -27,7 +27,7 @@ async function auswertungFreigeben(){
  try{
   const pass=$('kassiererPasswort').value;
   await kassiererApi('/api/kassierer',{kassiererPasswort:pass});
-  kassiererPasswort=pass;auswertungEntsperrt=true;$('kassiererPasswort').value='';
+  kassiererPasswort=pass;auswertungEntsperrt=true;$('auswertungDetails').open=true;$('kassiererPasswort').value='';
   $('authStatus').textContent='Kassierer-Bereich freigegeben. Nach Neuladen ist das Passwort erneut nötig.';
   $('jsonDatei').hidden=false;berechnen();
  }catch(error){$('authStatus').textContent=error.message;}
@@ -61,16 +61,16 @@ async function jsonDateiLaden(){
 }
 function ladeKasseMitMigration(k,version){
  let value=k;
- if(version!=='6.0'&&k?.modus==='stueckelung'&&Array.isArray(k.stueckelung)&&k.stueckelung.length===15){
+ if(!['6.0','6.1'].includes(version)&&k?.modus==='stueckelung'&&Array.isArray(k.stueckelung)&&k.stueckelung.length===15){
   const old=[50000,20000,10000,5000,2000,1000,500,200,100,50,20,10,5,2,1];
   const cent=k.stueckelung.reduce((s,n,i)=>s+(Number(n)||0)*old[i],0);
   value={...k,modus:'betrag',bestand:cent/100};
  }
- $('zaehlVerantwortung').value=version==='6.0'&&k?.modus==='ausstehend'?'kassierer':'hallendienst';
+ $('zaehlVerantwortung').value=['6.0','6.1'].includes(version)&&k?.modus==='ausstehend'?'kassierer':'hallendienst';
  return value;
 }
 
 function auswertungSperren(){
  kassiererPasswort='';auswertungEntsperrt=false;$('kassiererPasswort').value='';$('jsonDatei').hidden=true;
- $('authStatus').textContent='Kassierer-Bereich gesperrt.';berechnen();$('auswertungDetails').open=false;
+ $('authStatus').textContent='Kassierer-Bereich gesperrt.';berechnen();$('auswertungDetails').open=false;$('kassiererAnmeldung').open=false;
 }

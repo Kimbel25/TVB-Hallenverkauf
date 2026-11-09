@@ -323,3 +323,20 @@ test('complete 6.0 previews require cashier password and match final upload',asy
  const bytes=new Uint8Array(await response.arrayBuffer());assert.equal(fake.files.size,0);assert.equal((await send(input,{env:cashAuth})).status,200);
  assert.deepEqual([...fake.files.entries()].find(([p])=>p.endsWith('_komplett.pdf'))[1],bytes);
 }));
+
+test('6.1 removes donations without changing signed 6.0 records and completes in its own folder',async()=>withDropbox(async fake=>{
+ const old=nextFixture();const raw=await savedOpen(fake,old);
+ const oldPdf=[...fake.files.entries()].find(([p])=>p.endsWith('.pdf'))[1];
+ const next=nextFixture('00000000-0000-4000-8000-000000000061');next.abrechnung.version='6.1';
+ assert.throws(()=>validieren(next),/Bareinnahmen/);
+ next.abrechnung.kasse={modus:'ausstehend'};const data=validieren(next);assert.equal(data.kasse.sonstigeEinnahmen,0);
+ assert.equal((await send(next,{env:cashAuth})).status,200);
+ const openPath=[...fake.files.keys()].find(p=>p.includes('/V6_1/')&&p.endsWith('.json'));
+ const open=JSON.parse(new TextDecoder().decode(fake.files.get(openPath)));
+ const loaded=await admin({kassiererPasswort:'unit-cashier',beleg:open},true);assert.equal(loaded.status,200);
+ const final={id:next.id,abrechnung:{...loaded.data.abrechnung,kasse:{modus:'betrag',bestand:372}},kassiererPasswort:'unit-cashier',nachweisOffen:loaded.data.nachweisOffen};
+ const result=await send(final,{env:cashAuth});assert.equal(result.status,200);assert.equal(result.data.abrechnungsstatus,'komplett');
+ assert.ok(fake.files.has(openPath.replace(/\.json$/,'_komplett.pdf')));assert.equal((await send(final,{env:cashAuth})).status,200);
+ const oldLoaded=await admin({kassiererPasswort:'unit-cashier',beleg:raw},true);assert.equal(oldLoaded.status,200);assert.equal(oldLoaded.data.abrechnung.kasse.sonstigeEinnahmen,10);
+ assert.deepEqual(await createPdf(validieren(old),font),oldPdf);
+}));
