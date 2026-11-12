@@ -1,0 +1,127 @@
+{
+  "version": "6.0",
+  "id": "00000000-0000-4000-8000-000000000060",
+  "datum": "2026-11-03",
+  "mannschaft": "Damen 1 / Herren",
+  "person": "Erika Müller",
+  "waren": [
+    {
+      "bezeichnung": "Bier/Radler/Alkoholfrei – 20er Kasten",
+      "anzahl": 2,
+      "einzelpreis": 16,
+      "summe": 32
+    },
+    {
+      "bezeichnung": "Bier/Radler/Alkoholfrei – 24er Kasten",
+      "anzahl": 0,
+      "einzelpreis": 20,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Bier/Radler/Alkoholfrei – Flasche",
+      "anzahl": 0,
+      "einzelpreis": 0.8,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Cola – 24er Kasten",
+      "anzahl": 0,
+      "einzelpreis": 18,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Cola – Flasche",
+      "anzahl": 0,
+      "einzelpreis": 0.8,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Hochwald Limo/Apfelschorle – 20er Kasten",
+      "anzahl": 0,
+      "einzelpreis": 21,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Hochwald Limo/Apfelschorle – Flasche 0,5 l",
+      "anzahl": 0,
+      "einzelpreis": 1.1,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Hochwald Sprudel – 20er Kasten",
+      "anzahl": 0,
+      "einzelpreis": 16,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Hochwald Sprudel – Flasche 0,5 l",
+      "anzahl": 0,
+      "einzelpreis": 0.8,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "ISO Sport – 20er Kasten",
+      "anzahl": 0,
+      "einzelpreis": 18,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "ISO Sport – Flasche",
+      "anzahl": 0,
+      "einzelpreis": 0.9,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Sekt – Flasche",
+      "anzahl": 0,
+      "einzelpreis": 6,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Hanuta/Duplo – Stück",
+      "anzahl": 0,
+      "einzelpreis": 0.4,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Chips – Packung",
+      "anzahl": 0,
+      "einzelpreis": 1,
+      "summe": 0
+    },
+    {
+      "bezeichnung": "Hugo / Aperol / Spritz – Dose",
+      "anzahl": 0,
+      "einzelpreis": 1,
+      "summe": 0
+    }
+  ],
+  "ausgaben": [
+    {
+      "text": "Brötchen & Würstchen",
+      "betrag": 23.45
+    }
+  ],
+  "quittungen": true,
+  "bemerkung": "Testbeleg – keine echte Abrechnung",
+  "summen": {
+    "getraenke": 32,
+    "sonstige": 23.45,
+    "gesamt": 55.45
+  },
+  "mannschaften": [
+    "Damen 1",
+    "Herren"
+  ],
+  "kassenVerantwortung": "kassierer",
+  "abschlussstatus": "offen",
+  "kasse": {
+    "modus": "ausstehend",
+    "sonstigeEinnahmen": 10,
+    "einnahmenText": "Spende"
+  },
+  "pruefung": {
+    "verfahren": "HMAC-SHA256",
+    "signatur": "4788af77a5c7be578109223e2038f5f6e69cb2841d24487c56a71dc103cb0578"
+  }
+}

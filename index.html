@@ -1,214 +1,418 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#c41222">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#b8091a">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4.4">
 <link rel="manifest" href="/manifest.webmanifest?v=4.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TVB Hallenverkauf">
 <title>TVB Hallenverkauf</title>
 <style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#191919;background:#f5f5f7}
-*{box-sizing:border-box}
-body{margin:0}
-button,input,select,label{touch-action:manipulation}
-input,select,textarea{font-size:16px!important}
-#datum,#team1,#team2,#team1Eigen,#team2Eigen,#person{height:50px;min-height:50px;font-size:16px;appearance:none;-webkit-appearance:none;line-height:24px}
-#datum::-webkit-date-and-time-value{text-align:left}
-.artikelTitel strong{min-width:0;overflow-wrap:anywhere}
-.artikelTitel{min-width:0;display:flex;align-items:center;gap:8px}
-.artikelIcon{width:27px;height:32px;flex:0 0 27px;color:#333}
-.artikelTyp{font-size:11px;font-weight:600;color:#555;margin-top:3px}
-dialog{border:0;border-radius:18px;padding:26px;max-width:420px;width:calc(100% - 32px);box-shadow:0 15px 60px #0005}
-dialog::backdrop{background:#0008}
-summary{cursor:pointer;font-weight:700;padding:12px 0}
-details{border-top:1px solid #ddd;border-bottom:1px solid #ddd;margin-bottom:15px}
-#jsonDatei{margin-top:12px}
-dialog h2{font-size:23px}dialog p{line-height:1.6}
-.expenseName{display:flex;flex-direction:column;gap:6px}.expenseName input[hidden]{display:none}
+/* Gestaltung nach Apple Human Interface Guidelines: gruppierte Listen, Systemschrift,
+   44-pt-Tippflächen, Segmented Controls, Schalter, Sheets und Dunkelmodus. */
+:root{
+ --bg:#f2f2f7;--karte:#fff;--text:#000;--text2:rgba(60,60,67,.6);--text3:rgba(60,60,67,.3);
+ --sep:rgba(60,60,67,.29);--fill:rgba(118,118,128,.12);--fill2:rgba(118,118,128,.2);
+ --tint:#c41222;--tintBg:rgba(196,18,34,.1);--kopf:#b8091a;--rot:#ff3b30;--gruen:#34c759;--orange:#ff9500;
+ --segAktiv:#fff;--schalterAus:#e9e9ea;--material:rgba(250,250,250,.86);--alert:rgba(242,242,242,.92);
+ --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' viewBox='0 0 10 16'%3E%3Cpath d='M1.5 6 5 2.5 8.5 6M1.5 10 5 13.5 8.5 10' fill='none' stroke='%233c3c4399' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+ color:var(--text);background:var(--bg);-webkit-text-size-adjust:100%;color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+ --bg:#000;--karte:#1c1c1e;--text:#fff;--text2:rgba(235,235,245,.6);--text3:rgba(235,235,245,.3);
+ --sep:rgba(84,84,88,.65);--fill:rgba(118,118,128,.24);--fill2:rgba(118,118,128,.32);
+ --tint:#ff4d5e;--tintBg:rgba(255,77,94,.16);--kopf:#9e0715;--rot:#ff453a;--gruen:#30d158;--orange:#ff9f0a;
+ --segAktiv:#636366;--schalterAus:#39393d;--material:rgba(44,44,46,.86);--alert:rgba(44,44,46,.94);
+ --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' viewBox='0 0 10 16'%3E%3Cpath d='M1.5 6 5 2.5 8.5 6M1.5 10 5 13.5 8.5 10' fill='none' stroke='%23ebebf599' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);font-size:17px;line-height:1.3;letter-spacing:-.01em}
+button,input,select,label,summary{touch-action:manipulation}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+input,select,textarea{font:inherit;font-size:17px;color:var(--text);min-width:0}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 
-header{background:#b8091a;color:white;padding:22px 16px;text-align:center}
-.wappen{display:block;width:90px;height:auto;margin:0 auto 12px}
-header h1{font-size:23px;margin:0 0 5px}
-header p{margin:0;opacity:.85;font-size:13px}
-main{max-width:650px;margin:auto;padding:16px}
-section{background:white;border-radius:17px;padding:18px;margin-bottom:15px;box-shadow:0 2px 12px #00000008}
-h2{font-size:19px;margin:0 0 15px}
-label{font-size:14px;font-weight:600;display:block;margin-bottom:7px}
-input,select,textarea{font:inherit;border:1px solid #c9c9cf;border-radius:10px;padding:12px;color:#111;background:#fff;width:100%;min-width:0}
-input:focus,textarea:focus{outline:2px solid #c41222;outline-offset:1px}
-.field{margin:13px 0}
-.item:nth-child(even){background:#f0f0f3}
-.item{padding-left:8px!important;padding-right:8px!important;display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:8px;align-items:center;padding:13px 0;border-bottom:1px solid #eee}
-.item:last-child{border-bottom:0}
-.item strong{font-size:14px;display:block}
-.item small{display:block;margin-top:4px;color:#626262;font-size:12px}
-.mengenfeld{display:grid;grid-template-columns:32px minmax(0,1fr) 32px;gap:3px;align-items:center}
-.schritt{padding:8px 0;background:#dedee3;color:#111;font-size:21px;min-height:44px}
-.item input{padding:10px 0;text-align:center;font-size:19px;font-weight:600;color:#111!important;background:#fff!important}
-.total{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;padding:17px;background:#f4f4f5;border-radius:12px;margin-top:15px}
-.total b{font-size:20px;white-space:nowrap}
-.grand{background:#b8091a;color:white}
-button{font:inherit;border:0;border-radius:12px;padding:14px 17px;cursor:pointer;font-weight:650}
-.primary{background:#b8091a;color:#fff;width:100%;margin-top:9px}
-.secondary{background:#ececef;color:#181818}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.expense{display:grid;grid-template-columns:minmax(0,1fr) 110px 40px;gap:7px;margin:8px 0}
-.delete{background:#f5e6e7;color:#a30010;padding:8px}
-.note{font-size:12px;color:#666;line-height:1.5}
-.check{display:flex;gap:10px;align-items:flex-start;margin-top:15px}
-.check input{width:20px;height:20px;flex-shrink:0;accent-color:#b8091a}
-.check label{margin:2px 0;font-weight:400}
-#kassenWarnung{color:#9d0716;font-size:14px;line-height:1.5}
-#kassenAuswertung .total{font-size:13px;padding:12px;margin-top:5px}
-#kassenAuswertung .total b{font-size:17px}
-.status{font-size:13px;color:#666;text-align:center;margin-top:12px}
-footer{text-align:center;font-size:12px;color:#777;padding:20px}
+/* Kopf */
+header{position:relative;background:var(--kopf);color:#fff;text-align:center;padding:calc(env(safe-area-inset-top) + 22px) 56px 24px}
+.wappen{display:block;width:76px;height:auto;margin:0 auto 10px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+header h1{font-size:28px;font-weight:700;letter-spacing:.005em;margin:0}
+header p{margin:4px 0 0;font-size:15px;opacity:.85}
+#menueKnopf{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:12px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;display:grid;place-items:center}
+#menueKnopf:active{background:rgba(255,255,255,.35)}
+#menueKnopf svg{width:20px;height:20px}
+.menue{position:absolute;z-index:30;top:calc(env(safe-area-inset-top) + 54px);right:12px;width:min(270px,calc(100vw - 24px));text-align:left;color:var(--text);
+ background:var(--material);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+ border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.22),0 0 0 .5px var(--sep);overflow:hidden;transform-origin:top right;animation:aufklappen .2s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes aufklappen{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.menue button{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;min-height:44px;text-align:left;font-size:17px}
+.menue button+button{border-top:.5px solid var(--sep)}
+.menue button:active{background:var(--fill)}
+.menue small{display:block;font-size:13px;color:var(--text2);margin-top:1px}
+.menue svg{width:20px;height:20px;flex:0 0 20px;color:var(--text)}
+.menue .trenner{height:8px;background:var(--fill)}
+
+#offlineBanner{position:sticky;top:0;z-index:15;background:var(--orange);color:#fff;font-size:14px;font-weight:600;text-align:center;padding:8px 16px calc(8px)}
+
+/* Gruppierte Listen */
+main{max-width:680px;margin:0 auto;padding:4px 16px calc(env(safe-area-inset-bottom) + 24px)}
+.gruppe{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;margin:28px 4px 10px;letter-spacing:.01em}
+.nr{flex:0 0 24px;width:24px;height:24px;border-radius:50%;background:var(--tint);color:#fff;font-size:14px;font-weight:700;display:grid;place-items:center}
+.karte{background:var(--karte);border-radius:12px;overflow:hidden}
+.karte+.karte,.fussnote+.karte,.karte+.knopf,.fussnote+.knopf,.segBlock+.karte{margin-top:16px}
+.fussnote{font-size:13px;color:var(--text2);line-height:1.4;margin:7px 16px 0}
+.fussnote.oben{margin:0 16px 7px}
+.fehlerText{color:var(--rot)!important}
+.zeile{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;min-height:44px;padding:5px 16px;background:var(--karte)}
+.zeile+.zeile::before,.trennOben::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.zeile>label,.zeile>span:first-child{font-size:17px;font-weight:400;margin:0}
+.zeile input:not([type=checkbox]),.zeile select{border:0;background:transparent;text-align:right;padding:8px 0;width:100%;outline:none;border-radius:0}
+.zeile select{appearance:none;-webkit-appearance:none;text-align-last:right;padding-right:18px;background:var(--chevron) no-repeat right center/10px 16px;color:var(--text2)}
+.zeile select:focus-visible,.zeile input:focus-visible{outline:none}
+.zeile input[type=date]{min-height:34px;-webkit-appearance:none;appearance:none;color:var(--text2)}
+.zeile input[type=date]::-webkit-date-and-time-value{text-align:right}
+.zeile .eigen{grid-column:1/-1;text-align:left!important}
+.zeile.voll{grid-template-columns:minmax(0,1fr)}
+.zeile.voll:has(>[hidden]){display:none}
+#ausgaben:empty+.aktionsZeile::before{display:none}
+textarea{display:block;width:100%;border:0;background:transparent;padding:12px 16px;resize:vertical;min-height:88px;outline:none;line-height:1.35}
+.summe{font-weight:600}
+.summe,.wertZeile{grid-template-columns:minmax(0,1fr) auto}
+.summe b,.wertZeile b{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.summe b{font-size:17px}
+.zeile.ungueltig{background:color-mix(in srgb,var(--karte) 88%,var(--rot))}
+.zeile.ungueltig>label,.zeile.ungueltig>span:first-child{color:var(--rot)}
+.feldFehler{color:var(--rot);font-size:13px;margin:7px 16px 0;display:flex;gap:6px;align-items:flex-start}
+.feldFehler::before{content:"!";flex:0 0 16px;height:16px;border-radius:50%;background:var(--rot);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;margin-top:1px}
+
+/* Waren mit Stepper */
+.ware{grid-template-columns:30px minmax(0,1fr) auto;padding-top:9px;padding-bottom:9px}
+.ware+.ware::before{left:58px}
+.wareIcon{color:var(--text2);display:grid;place-items:center}
+.wareIcon svg{width:26px;height:28px}
+.wareName{display:block;font-size:16px;overflow-wrap:break-word;hyphens:auto}
+.wareInfo{display:block;font-size:13px;color:var(--text2);margin-top:2px}
+.stepper{display:grid;grid-template-columns:38px 46px 38px;align-items:center;height:34px;background:var(--fill);border-radius:9px;overflow:hidden}
+.stepper button{height:100%;font-size:22px;font-weight:400;line-height:1;color:var(--text);display:grid;place-items:center}
+.stepper button:active{background:var(--fill2)}
+.stepper button:disabled{color:var(--text3)}
+.zeile .stepper input{height:100%;border:0!important;text-align:center!important;padding:0!important;border-left:.5px solid var(--sep);border-right:.5px solid var(--sep);background:transparent;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;width:100%;outline:none;-moz-appearance:textfield}
+.zeile .stepper input{border-left:.5px solid var(--sep)!important;border-right:.5px solid var(--sep)!important}
+.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ware.hatMenge .wareIcon{color:var(--tint)}
+.ware.hatMenge .stepper{background:var(--tintBg)}
+.ware.hatMenge .stepper input{color:var(--tint)}
+
+/* Ausgaben */
+.ausgabe{grid-template-columns:28px minmax(0,1fr) 104px;padding-top:8px;padding-bottom:8px}
+.ausgabe+.ausgabe::before{left:56px}
+.loeschen{width:22px;height:22px;border-radius:50%;background:var(--rot);color:#fff;display:grid;place-items:center}
+.loeschen svg{width:12px;height:12px}
+.loeschen:disabled{opacity:.35}
+.expenseName{display:flex;flex-direction:column;gap:2px;min-width:0}
+.expenseName select{text-align:left!important;text-align-last:left!important;color:var(--text)!important;padding:6px 18px 6px 0!important}
+.expenseName input{text-align:left!important;padding:6px 0!important;border-top:.5px solid var(--sep)!important}
+.ausgabe .betrag{text-align:right;background:var(--fill)!important;border-radius:8px!important;padding:7px 10px!important;font-variant-numeric:tabular-nums}
+.aktionsZeile{display:flex;width:100%;align-items:center;gap:12px;min-height:44px;padding:10px 16px;color:var(--tint);font-size:17px;text-align:left;position:relative;background:var(--karte)}
+.aktionsZeile:active{background:var(--fill)}
+.aktionsZeile:disabled{color:var(--text3)}
+.aktionsZeile svg{width:22px;height:22px;flex:0 0 22px}
+.aktionsZeile.destruktiv{color:var(--rot)}
+
+/* Schalter */
+.schalterZeile{grid-template-columns:minmax(0,1fr) auto;padding-top:11px;padding-bottom:11px;cursor:pointer}
+.schalterZeile span{font-size:15px!important;line-height:1.35}
+.schalter{appearance:none;-webkit-appearance:none;width:51px;height:31px;border-radius:16px;background:var(--schalterAus);position:relative;margin:0;cursor:pointer;transition:background .25s;flex-shrink:0}
+.schalter::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);transition:transform .25s cubic-bezier(.3,1.3,.5,1)}
+.schalter:checked{background:var(--gruen)}
+.schalter:checked::before{transform:translateX(20px)}
+.schalter:disabled{opacity:.5}
+
+/* Segmented Control */
+.segBlock{margin-top:0}
+.segLabel{font-size:13px;color:var(--text2);margin:0 16px 7px;text-transform:uppercase;letter-spacing:.02em}
+.segmented{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:2px;background:var(--fill);border-radius:9px}
+.segmented button{min-height:34px;border-radius:7px;font-size:14px;font-weight:500;padding:6px 6px;line-height:1.2;transition:background .2s,box-shadow .2s}
+.segmented button.aktiv{background:var(--segAktiv);font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+.segmented.gesperrt{opacity:.55}
+.segQuelle{display:none}
+.segBlock+.segBlock,.karte+.segBlock,.fussnote+.segBlock{margin-top:18px}
+
+/* Knöpfe */
+.knopf{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:50px;border-radius:12px;font-size:17px;font-weight:600;padding:12px 18px;transition:opacity .15s,transform .1s}
+.knopf:active:not(:disabled){opacity:.75;transform:scale(.985)}
+.gefuellt{background:var(--tint);color:#fff}
+.getoent{background:var(--tintBg);color:var(--tint)}
+.grau{background:var(--karte);color:var(--tint)}
+.knopf:disabled{background:var(--fill);color:var(--text3);cursor:default}
+.gefuellt.laedt:disabled{background:var(--tint);color:#fff;opacity:.85}
+.knopf+.knopf{margin-top:10px}
+.spinner{display:none;width:18px;height:18px;border-radius:50%;border:2.2px solid currentColor;border-right-color:transparent;animation:drehen .75s linear infinite}
+.laedt .spinner{display:inline-block}
+@keyframes drehen{to{transform:rotate(360deg)}}
+.textKnopf{color:var(--tint);font-size:17px;padding:8px 4px;min-height:44px}
+
+/* Aufklappbereich Auswertung */
+details>summary{list-style:none;display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 16px;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+details>summary .chev{margin-left:auto;width:9px;height:14px;color:var(--text3);transition:transform .2s}
+details[open]>summary .chev{transform:rotate(90deg)}
+details>summary svg.schloss{width:20px;height:20px;color:var(--tint)}
+.auswertungInhalt{padding:0 0 12px}
+.auswertungInhalt>.knopf{width:calc(100% - 32px);margin:4px 16px 8px}
+#kassenAuswertung .zeile,#alteSummen .zeile{min-height:38px;font-size:15px}
+#kassenAuswertung .zeile>span:first-child,#alteSummen .zeile>span:first-child{font-size:15px}
+.wertZeile.zwischen{font-weight:600}
+.wertZeile.auszahlung{color:var(--tint);font-weight:600}
+.wertZeile.auszahlung b{font-size:17px}
+#kassenWarnung:not(:empty){margin:10px 16px 0;color:var(--rot);font-size:14px;line-height:1.4}
+.auswertungInhalt .karte{margin:4px 16px 0;background:var(--bg)}
+.auswertungInhalt .karte .zeile{background:transparent}
+
+.status{font-size:13px;color:var(--text2);text-align:center;margin:12px 16px 0;line-height:1.4}
+footer{text-align:center;font-size:12px;color:var(--text2);padding:8px 20px calc(env(safe-area-inset-bottom) + 24px)}
+
+/* Toast */
+#toast{position:fixed;z-index:40;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translate(-50%,0);max-width:min(440px,calc(100vw - 32px));width:max-content;
+ background:var(--material);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);color:var(--text);
+ border-radius:22px;padding:11px 18px;font-size:15px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.18),0 0 0 .5px var(--sep);display:flex;gap:9px;align-items:center;animation:toastEin .35s cubic-bezier(.2,.9,.3,1.15)}
+#toast.weg{animation:toastAus .25s ease-in forwards}
+#toast .punkt{flex:0 0 8px;height:8px;border-radius:50%;background:var(--text2)}
+#toast.ok .punkt{background:var(--gruen)}#toast.fehler .punkt{background:var(--rot)}
+@keyframes toastEin{from{opacity:0;transform:translate(-50%,-24px) scale(.95)}}
+@keyframes toastAus{to{opacity:0;transform:translate(-50%,-24px) scale(.95)}}
+
+/* Dialoge */
+dialog{border:0;padding:0;color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.alert{width:min(300px,calc(100vw - 48px));border-radius:14px;background:var(--alert);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);text-align:center;overflow:hidden}
+.alert[open]{animation:alertEin .25s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes alertEin{from{opacity:0;transform:scale(1.12)}}
+.alertText{padding:20px 16px 18px}
+.alert h2{font-size:17px;font-weight:600;margin:0 0 4px}
+.alert p{font-size:13px;line-height:1.4;margin:0}
+.alertKnoepfe{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-top:.5px solid var(--sep)}
+.alertKnoepfe.gestapelt{grid-auto-flow:row}
+.alertKnoepfe button{min-height:44px;font-size:17px;color:var(--tint);padding:10px}
+.alertKnoepfe button+button{border-left:.5px solid var(--sep)}
+.alertKnoepfe.gestapelt button+button{border-left:0;border-top:.5px solid var(--sep)}
+.alertKnoepfe button:active{background:var(--fill)}
+.alertKnoepfe .fett{font-weight:600}
+.alertKnoepfe .destruktiv{color:var(--rot)}
+
+/* Erfolg mit Konfetti / Feuerwerk */
+dialog.feier{width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;background:transparent;overflow:hidden}
+dialog.feier[open]{display:grid;place-items:center}
+dialog.feier::backdrop{background:rgba(0,0,0,.45)}
+#feierCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.feier .alert{position:relative;z-index:1;width:min(320px,calc(100vw - 48px))}
+.feier[open] .alert{animation:alertEin .35s cubic-bezier(.2,.9,.3,1.25)}
+.erfolgSymbol{width:64px;height:64px;margin:4px auto 12px;border-radius:50%;display:grid;place-items:center;background:var(--gruen);color:#fff}
+.erfolgSymbol.offen{background:var(--orange)}
+.erfolgSymbol svg{width:34px;height:34px}
+.erfolgSymbol path.haken{stroke-dasharray:40;stroke-dashoffset:40;animation:hakenZiehen .45s .2s ease-out forwards}
+@keyframes hakenZiehen{to{stroke-dashoffset:0}}
+.feier h2{font-size:20px;font-weight:700}
+.feier p{font-size:15px}
+.feier .vorgang{font-size:12px;color:var(--text2);margin-top:10px;word-break:break-all}
+
+/* Sheet */
+.sheet{width:100%;max-width:560px;margin:auto auto 0;border-radius:14px 14px 0 0;background:var(--bg);padding:8px 16px calc(env(safe-area-inset-bottom) + 24px);max-height:90vh;overflow:auto}
+.sheet[open]{animation:sheetEin .35s cubic-bezier(.2,.9,.3,1)}
+@keyframes sheetEin{from{transform:translateY(100%)}}
+@media (min-width:700px){.sheet{margin:auto;border-radius:14px}.sheet[open]{animation:alertEin .25s ease-out}}
+.grabber{display:block;width:36px;height:5px;border-radius:3px;background:var(--text3);margin:0 auto 4px}
+.sheetKopf{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:8px}
+.sheetKopf h2{font-size:17px;font-weight:600;margin:0;text-align:center}
+.sheetKopf .textKnopf{justify-self:end;font-weight:600}
+.sheet .knopf{margin-top:16px}
+.sheet .fussnote{margin-top:10px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
 @media print{
-body{background:white}
-header{color:black;background:white;border-bottom:3px solid #b8091a}
-main{max-width:none}
-section{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
-button,.actions,.delete,footer,.status{display:none!important}
-input,textarea{border:0;padding:4px}
-.item input{font-size:14px}
-.total.grand{background:#eee;color:black}
+ :root{--bg:#fff;--karte:#fff;--text:#000;--text2:#444}
+ body{background:#fff}
+ header{color:#000;background:#fff;border-bottom:3px solid #b8091a;padding:12px}
+ main{max-width:none}
+ .karte{border:1px solid #ddd;break-inside:avoid}
+ button,.knopf,.segmented,#menueKnopf,.menue,dialog,#toast,#offlineBanner,footer,.status,.stepper button{display:none!important}
+ .segQuelle{display:block!important;border:0;font:inherit}
+ .stepper{display:block;background:none}
 }
 </style>
 </head>
 <body>
 <header>
-<img class="wappen" src="/assets/tvb-wappen.svg" alt="Wappen des Turnverein Birkenfeld 1848" width="90" height="90">
-<h1>TVB Hallenverkauf<br><span style="font-size:17px">Saison 2026/2027</span></h1>
-<p>Turnverein Birkenfeld · Abteilung Handball · Version 6.1</p>
-</header>
-<main>
-<section>
-<h2>1. Hallendienst</h2>
-<div class="field"><label for="datum">Datum</label><input type="date" id="datum"></div>
-<input type="hidden" id="mannschaft">
-<div class="field"><label for="team1">Mannschaft / Gruppe</label><select id="team1"></select><input id="team1Eigen" aria-label="Eigene Gruppe 1" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
-<div class="field"><label for="team2">Zweite Mannschaft / Gruppe (optional)</label><select id="team2"></select><input id="team2Eigen" aria-label="Eigene Gruppe 2" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
-<div class="field"><label for="person">Name</label><input id="person" placeholder="Vor- und Nachname"></div>
-</section>
-
-<section id="schnellAktionen">
-<div class="actions"><button class="secondary" id="jsonLadenOben" onclick="jsonLadenStarten()">JSON-Abrechnung laden</button><button class="secondary" id="neueAbrechnungOben" onclick="zuruecksetzen()">Neue Abrechnung</button></div>
-<details id="kassiererAnmeldung"><summary>Kassierer-Passwort eingeben</summary>
-<div class="field"><label for="kassiererPasswort">Kassierer-Passwort</label><input id="kassiererPasswort" type="password" autocomplete="off"></div>
-<button class="secondary" id="auswertungFreigeben" onclick="auswertungFreigeben()">Auswertung freigeben</button>
-<button class="secondary" id="auswertungSperren" onclick="auswertungSperren()">Auswertung sperren</button>
-<p class="note" id="authStatus" role="status">Die Auswertung wird erst nach der Passwortprüfung angezeigt.</p>
-<button class="secondary" id="jsonAuswaehlenOben" onclick="jsonLadenStarten()">JSON-Datei auswählen</button>
-<p class="note" id="importStatus" role="status"></p></details>
-</section>
-
-<section>
-<h2>2. Wareneinsatz plus Getränke</h2>
-<p class="note">Hier werden Getränke, Hanuta/Duplo, Chips und Dosen für die Abrechnung erfasst. Es handelt sich nicht um Verkaufseinnahmen.</p>
-<div id="waren"></div>
-<div class="total"><span>Wareneinsatz plus Getränke</span><b id="getraenkeSumme">0,00 €</b></div>
-</section>
-
-<section>
-<h2>3. Ausgaben aus der Kasse</h2>
-<p class="note">Bezeichnung aus den Vorschlägen auswählen oder einen eigenen Text eingeben.</p>
-
-<div id="ausgaben"></div>
-<button class="secondary" onclick="addAusgabe()">+ Ausgabe hinzufügen</button>
-<div class="total"><span>Sonstige Ausgaben</span><b id="ausgabenSumme">0,00 €</b></div>
-<div class="check">
-<input type="checkbox" id="quittungen">
-<label for="quittungen">Ich bestätige, dass das Geld für die sonstigen Ausgaben aus der Kasse entnommen und die zugehörigen Quittungen in der Kasse hinterlegt wurden.</label>
+<img class="wappen" src="/assets/tvb-wappen.svg" alt="Wappen des Turnverein Birkenfeld 1848" width="76" height="76">
+<h1>TVB Hallenverkauf</h1>
+<p>Saison <span data-saison>2026/2027</span> · Abteilung Handball</p>
+<button id="menueKnopf" type="button" aria-label="Weitere Aktionen" aria-haspopup="menu" aria-expanded="false" aria-controls="menue" onclick="menueUmschalten()">
+<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+</button>
+<div class="menue" id="menue" role="menu" hidden>
+<button type="button" role="menuitem" onclick="menueAktion(zuruecksetzen)"><span>Neue Abrechnung</span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg></button>
+<div class="trenner" role="separator"></div>
+<button type="button" role="menuitem" onclick="menueAktion(jsonLadenStarten)"><span>JSON-Abrechnung laden<small>Nur für Kassierer</small></span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></button>
+<button type="button" role="menuitem" onclick="menueAktion(()=>zeigeKassiererAnmeldung())"><span>Kassierer-Bereich<small>Auswertung freigeben oder sperren</small></span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
 </div>
-</section>
+</header>
+<div id="offlineBanner" role="status" hidden>Keine Internetverbindung – Eingaben bleiben gespeichert, Senden ist erst wieder online möglich.</div>
+<main>
+
+<h2 class="gruppe"><span class="nr">1</span>Hallendienst</h2>
+<input type="hidden" id="mannschaft">
+<div class="karte">
+<div class="zeile"><label for="datum">Datum</label><input type="date" id="datum"></div>
+<div class="zeile"><label for="team1">Mannschaft</label><select id="team1"></select></div>
+<div class="zeile voll"><input id="team1Eigen" class="eigen" aria-label="Eigene Gruppe 1" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
+<div class="zeile"><label for="team2">2. Mannschaft</label><select id="team2"></select></div>
+<div class="zeile voll"><input id="team2Eigen" class="eigen" aria-label="Eigene Gruppe 2" maxlength="55" placeholder="Andere Gruppe eingeben" hidden></div>
+<div class="zeile"><label for="person">Name</label><input id="person" placeholder="Vor- und Nachname" autocomplete="name"></div>
+</div>
+<p class="fussnote">Die zweite Mannschaft ist optional.</p>
+
+<h2 class="gruppe"><span class="nr">2</span>Wareneinsatz plus Getränke</h2>
+<p class="fussnote oben">Getränke, Hanuta/Duplo, Chips und Dosen für die Abrechnung – keine Verkaufseinnahmen.</p>
+<div class="karte">
+<div id="waren"></div>
+<div class="zeile summe trennOben"><span>Wareneinsatz plus Getränke</span><b id="getraenkeSumme">0,00 €</b></div>
+</div>
+
+<h2 class="gruppe"><span class="nr">3</span>Ausgaben aus der Kasse</h2>
+<div class="karte">
+<div id="ausgaben"></div>
+<button type="button" class="aktionsZeile trennOben" id="ausgabeHinzu" onclick="addAusgabe()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 14.5h-2V13H7.5v-2H11V7.5h2V11h3.5v2H13z"/></svg>Ausgabe hinzufügen</button>
+<div class="zeile summe trennOben"><span>Sonstige Ausgaben</span><b id="ausgabenSumme">0,00 €</b></div>
+</div>
+<p class="fussnote">Bezeichnung aus den Vorschlägen auswählen oder einen eigenen Text eingeben.</p>
+<div class="karte">
+<label class="zeile schalterZeile" for="quittungen"><span>Ich bestätige, dass das Geld für die sonstigen Ausgaben aus der Kasse entnommen und die zugehörigen Quittungen in der Kasse hinterlegt wurden.</span><input type="checkbox" id="quittungen" class="schalter" role="switch"></label>
+</div>
 
 <section id="kasseAbschnitt">
-<h2>4. Kasse zählen</h2>
-<div class="field"><label for="zaehlVerantwortung">Wer zählt die Kasse?</label><select id="zaehlVerantwortung"><option value="">Bitte auswählen …</option><option value="hallendienst">Hallendienst zählt</option><option value="kassierer">Kassierer soll zählen</option></select></div>
-<p class="note" id="kassiererHinweis" hidden>Der Kassierer zählt später. Du übermittelst zunächst einen vorläufigen Beleg und eine offene JSON ohne Gewinnberechnung.</p>
-<p class="note" id="importHinweis" hidden>Geprüfte JSON geladen: Nur die Kassenzählung kann ergänzt werden. Die übrigen Angaben bleiben erhalten.</p>
-<div id="kassenZaehlbereich" hidden>
-<div class="total"><span>Kassenbestand zu Beginn (fest)</span><b>130,00 €</b></div>
-<p class="note">Zähle nach dem Verkauf und nach den bereits entnommenen sonstigen Ausgaben. Getränkegeld und die Auszahlungen an Mannschaft und Abteilung dürfen noch nicht entnommen sein.</p>
-<div class="field"><label for="zaehlmodus">Art der Kassenzählung</label><select id="zaehlmodus"><option value="betrag">Gezählten Gesamtbetrag eingeben</option><option value="stueckelung">Scheine und Münzen einzeln zählen</option></select></div>
-<div class="field" id="direktZaehlung"><label for="kassenbestand">Bestand nach Kassenzählung (€)</label><input id="kassenbestand" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" placeholder="Gezählten Betrag eingeben"></div>
-<div id="stueckelungBlock" hidden><p class="note">Für jede Sorte die Anzahl eingeben. Die App addiert den Bestand automatisch.</p><div id="stueckelungFelder"></div></div>
-<div class="total"><span>Gezählter Bestand</span><b id="zaehlSumme">–</b></div>
+<h2 class="gruppe"><span class="nr">4</span>Kasse zählen</h2>
+<div class="segBlock">
+<div class="segLabel" id="zaehlVerantwortungLabel">Wer zählt die Kasse?</div>
+<div class="segmented" data-select="zaehlVerantwortung" role="radiogroup" aria-labelledby="zaehlVerantwortungLabel">
+<button type="button" role="radio" data-wert="hallendienst">Hallendienst zählt</button>
+<button type="button" role="radio" data-wert="kassierer">Kassierer soll zählen</button>
 </div>
-<div id="alteEinnahmen" hidden><p class="note">Mitgezählte sonstige Einnahmen aus der älteren Abrechnung (bleiben erhalten): <b id="alteEinnahmenWert"></b></p><input type="hidden" id="sonstigeEinnahmen" value="0"><input type="hidden" id="einnahmenText" value=""></div>
+<select id="zaehlVerantwortung" class="segQuelle" aria-labelledby="zaehlVerantwortungLabel"><option value="">Bitte auswählen …</option><option value="hallendienst">Hallendienst zählt</option><option value="kassierer">Kassierer soll zählen</option></select>
+</div>
+<p class="fussnote" id="kassiererHinweis" hidden>Der Kassierer zählt später. Du übermittelst zunächst einen vorläufigen Beleg und eine offene JSON ohne Gewinnberechnung.</p>
+<p class="fussnote" id="importHinweis" hidden>Geprüfte JSON geladen: Nur die Kassenzählung kann ergänzt werden. Die übrigen Angaben bleiben erhalten.</p>
+<div id="kassenZaehlbereich" hidden>
+<div class="karte" style="margin-top:16px"><div class="zeile"><span>Kassenbestand zu Beginn</span><b style="text-align:right;font-weight:400;color:var(--text2)">130,00 € (fest)</b></div></div>
+<p class="fussnote">Zähle nach dem Verkauf und nach den bereits entnommenen sonstigen Ausgaben. Getränkegeld und die Auszahlungen an Mannschaft und Abteilung dürfen noch nicht entnommen sein.</p>
+<div class="segBlock">
+<div class="segLabel" id="zaehlmodusLabel">Art der Kassenzählung</div>
+<div class="segmented" data-select="zaehlmodus" role="radiogroup" aria-labelledby="zaehlmodusLabel">
+<button type="button" role="radio" data-wert="betrag">Gesamtbetrag</button>
+<button type="button" role="radio" data-wert="stueckelung">Scheine &amp; Münzen</button>
+</div>
+<select id="zaehlmodus" class="segQuelle" aria-labelledby="zaehlmodusLabel"><option value="betrag">Gezählten Gesamtbetrag eingeben</option><option value="stueckelung">Scheine und Münzen einzeln zählen</option></select>
+</div>
+<div class="karte" style="margin-top:12px">
+<div class="zeile" id="direktZaehlung"><label for="kassenbestand">Gezählter Bestand</label><input id="kassenbestand" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" placeholder="0,00 €"></div>
+<div id="stueckelungBlock" hidden><div id="stueckelungFelder"></div></div>
+<div class="zeile summe trennOben"><span>Gezählter Bestand</span><b id="zaehlSumme">–</b></div>
+</div>
+<p class="fussnote" id="stueckelungHinweis">Bei „Scheine &amp; Münzen“ für jede Sorte die Anzahl eingeben – die App addiert automatisch.</p>
+</div>
+<div id="alteEinnahmen" hidden><p class="fussnote">Mitgezählte sonstige Einnahmen aus der älteren Abrechnung (bleiben erhalten): <b id="alteEinnahmenWert"></b></p><input type="hidden" id="sonstigeEinnahmen" value="0"><input type="hidden" id="einnahmenText" value=""></div>
 </section>
-<section>
-<h2>5. Abschluss</h2>
-<details id="auswertungDetails"><summary>Auswertung und Abschluss aufklappen (Kassierer)</summary>
-<button class="secondary" onclick="zeigeKassiererAnmeldung()">Kassierer-Bereich öffnen</button>
-<div id="auswerteBlock"><p class="note">Ausgaben und Warenmengen erfassen, Kasse zählen – die folgenden Werte werden automatisch berechnet.</p><div id="kassenAuswertung" aria-live="polite"></div><p id="kassenWarnung" role="status"></p></div>
-<div id="alteSummen" hidden>
-<div class="total"><span>Wareneinsatz plus Getränke</span><b id="sum1">0,00 €</b></div>
-<div class="total"><span>Sonstige Ausgaben</span><b id="sum2">0,00 €</b></div>
-<div class="total grand"><span>Gesamtausgaben</span><b id="gesamt">0,00 €</b></div>
+
+<h2 class="gruppe"><span class="nr">5</span>Abschluss</h2>
+<div class="karte">
+<details id="auswertungDetails"><summary>
+<svg class="schloss" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+<span>Auswertung <small style="color:var(--text2);font-size:15px">(Kassierer)</small></span>
+<svg class="chev" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m1.5 1.5 5.5 5.5-5.5 5.5"/></svg>
+</summary>
+<div class="auswertungInhalt">
+<button type="button" class="knopf getoent" id="kassiererOeffnen" data-immer onclick="zeigeKassiererAnmeldung()">Mit Kassierer-Passwort freigeben</button>
+<div id="auswerteBlock"><p class="fussnote" style="margin-top:0">Werte werden automatisch aus Waren, Ausgaben und Kassenzählung berechnet.</p><div class="karte"><div id="kassenAuswertung" aria-live="polite"></div></div><p id="kassenWarnung" role="status"></p></div>
+<div id="alteSummen" hidden><div class="karte">
+<div class="zeile summe"><span>Wareneinsatz plus Getränke</span><b id="sum1">0,00 €</b></div>
+<div class="zeile summe"><span>Sonstige Ausgaben</span><b id="sum2">0,00 €</b></div>
+<div class="zeile summe wertZeile auszahlung"><span>Gesamtausgaben</span><b id="gesamt">0,00 €</b></div>
+</div></div>
 </div>
 </details>
-<div class="field"><label for="bemerkung">Bemerkungen</label><textarea id="bemerkung" rows="3" placeholder="Optional"></textarea></div>
-<div class="actions">
-<button class="primary" onclick="pdfErstellen()">PDF ansehen / herunterladen</button>
-<button class="secondary" onclick="zuruecksetzen()">Neue Abrechnung</button>
 </div>
-<p class="status" id="status">Die Eingaben werden lokal auf diesem Gerät gespeichert.</p>
-<p class="note">Bei der Übermittlung werden PDF und JSON automatisch erstellt und in Dropbox gespeichert. Die PDF-Vorschau verwendet denselben Serverbeleg wie die Dropbox-Übermittlung und benötigt eine Internetverbindung.</p>
-</section>
+<div class="karte"><textarea id="bemerkung" rows="3" placeholder="Bemerkungen (optional)" aria-label="Bemerkungen"></textarea></div>
+<button type="button" class="knopf grau" id="pdfButton" data-immer onclick="pdfErstellen()" style="margin-top:16px"><span class="spinner" aria-hidden="true"></span><span class="knopfText">PDF-Vorschau ansehen</span></button>
+<p class="status" id="status">Die Eingaben werden lokal auf diesem Gerät gespeichert. Die PDF-Vorschau benötigt eine Internetverbindung.</p>
 
-
-<section id="kassiererWerkzeuge">
-<h2>Kassierer: JSON-Abrechnung laden</h2>
-<p class="note">Offene JSON aus Dropbox auswählen, mit Kassierer-Passwort prüfen und die Zählung nachtragen. Das Passwort wird nicht in der JSON gespeichert.</p>
-<button class="secondary" id="jsonLadenButton" onclick="jsonLadenStarten()">JSON-Abrechnung laden</button>
-<input id="jsonDatei" type="file" accept=".json,application/json" hidden onchange="jsonDateiLaden()" aria-label="Offene JSON auswählen">
-</section>
-<section>
-  <h2>6. Abrechnung übermitteln</h2>
-  <p class="note">
-    Die fertige Abrechnung wird sicher an den
-    Kassenwart des TV Birkenfeld übertragen.
-  </p>
-
-  <div class="field">
-    <label for="vereinscode">Vereinscode</label>
-    <input
-      id="vereinscode"
-      type="password"
-      autocomplete="off"
-      placeholder="Vereinscode eingeben">
-  </div>
-
-  <button
-    class="primary"
-    id="sendenButton"
-    onclick="abrechnungSenden()">
-    Abrechnung an Kassenwart übermitteln
-  </button>
-
-  <p class="status" id="sendeStatus" role="status"
-     aria-live="polite">
-    Noch nicht übermittelt
-  </p>
-</section>
-
+<h2 class="gruppe"><span class="nr">6</span>Abrechnung übermitteln</h2>
+<div class="karte">
+<div class="zeile"><label for="vereinscode">Vereinscode</label><input id="vereinscode" type="password" autocomplete="off" placeholder="Erforderlich" enterkeyhint="send" data-immer></div>
+</div>
+<p class="fussnote">PDF und JSON werden automatisch erstellt und in der Dropbox des Kassenwarts gespeichert.</p>
+<button type="button" class="knopf gefuellt" id="sendenButton" data-immer onclick="abrechnungSenden()" style="margin-top:16px"><span class="spinner" aria-hidden="true"></span><span class="knopfText">Abrechnung übermitteln</span></button>
+<p class="status" id="sendeStatus" role="status" aria-live="polite">Noch nicht übermittelt</p>
+<button type="button" class="knopf getoent" id="neuNachSenden" data-immer onclick="zuruecksetzen()" style="margin-top:14px" hidden>Neue Abrechnung beginnen</button>
 
 </main>
-<footer>Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027 · Version 6.1</footer>
+<footer>Turnverein Birkenfeld · Abteilung Handball · Saison <span data-saison>2026/2027</span> · Version <span data-app-version>6.2</span></footer>
 
-<dialog id="erfolgDialog" aria-labelledby="erfolgTitel">
+<div id="toast" role="status" aria-live="polite" hidden><span class="punkt" aria-hidden="true"></span><span id="toastText"></span></div>
+
+<dialog id="erfolgDialog" class="feier" aria-labelledby="erfolgTitel" aria-describedby="erfolgText">
+<canvas id="feierCanvas" aria-hidden="true"></canvas>
+<div class="alert">
+<div class="alertText">
+<div class="erfolgSymbol" id="erfolgSymbol" aria-hidden="true"></div>
 <h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
 <p id="erfolgText">PDF und JSON sind in Dropbox bestätigt gespeichert.</p>
-<button class="primary" autofocus onclick="document.getElementById('erfolgDialog').close()">OK, verstanden</button>
+<p class="vorgang" id="erfolgVorgang"></p>
+</div>
+<div class="alertKnoepfe gestapelt">
+<button type="button" class="fett" autofocus onclick="erfolgSchliessen()">Fertig</button>
+<button type="button" onclick="erfolgSchliessen();zuruecksetzen()">Neue Abrechnung beginnen</button>
+</div>
+</div>
 </dialog>
-<script src="/assets/ablauf.js?v=6.1"></script>
-<script src="/assets/kasse.js?v=6.1"></script>
+
+<dialog id="bestaetigenDialog" class="alert" aria-labelledby="bestaetigenTitel" aria-describedby="bestaetigenText">
+<div class="alertText"><h2 id="bestaetigenTitel"></h2><p id="bestaetigenText"></p></div>
+<div class="alertKnoepfe"><button type="button" id="bestaetigenNein">Abbrechen</button><button type="button" class="fett" id="bestaetigenJa">OK</button></div>
+</dialog>
+
+<dialog id="kassiererAnmeldung" class="sheet" aria-labelledby="sheetTitel">
+<span class="grabber" aria-hidden="true"></span>
+<div class="sheetKopf"><span></span><h2 id="sheetTitel">Kassierer</h2><button type="button" class="textKnopf" onclick="kassiererSchliessen()">Fertig</button></div>
+<p class="fussnote oben" id="authStatus" role="status">Die Auswertung wird erst nach der Passwortprüfung angezeigt.</p>
+<div id="anmeldeBlock">
+<div class="karte"><div class="zeile"><label for="kassiererPasswort">Passwort</label><input id="kassiererPasswort" type="password" autocomplete="off" placeholder="Erforderlich" enterkeyhint="go"></div></div>
+<button type="button" class="knopf gefuellt" id="auswertungFreigeben" onclick="auswertungFreigeben()"><span class="spinner" aria-hidden="true"></span><span class="knopfText">Freigeben</span></button>
+</div>
+<div id="freigabeBlock" hidden>
+<div class="karte">
+<button type="button" class="aktionsZeile" onclick="jsonDateiWaehlen()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>Offene JSON-Datei auswählen …</button>
+<button type="button" class="aktionsZeile destruktiv trennOben" id="auswertungSperren" onclick="auswertungSperren()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Kassierer-Bereich sperren</button>
+</div>
+<p class="fussnote" id="importStatus" role="status"></p>
+<p class="fussnote">Offene JSON zuerst aus Dropbox auf dieses Gerät laden. Das Passwort wird nicht in der JSON gespeichert.</p>
+</div>
+<input id="jsonDatei" type="file" accept=".json,application/json" hidden onchange="jsonDateiLaden()" aria-label="Offene JSON auswählen">
+</dialog>
+
+<script src="/assets/ablauf.js?v=6.2"></script>
+<script src="/assets/kasse.js?v=6.2"></script>
+<script src="/assets/feier.js?v=6.2"></script>
 <script>
 const aktuelleArtikel=[
 ["Bier/Radler/Alkoholfrei – 20er Kasten",16],
@@ -240,14 +444,97 @@ let storedSubmission=null;
 let previewId=importKontext?.id||crypto.randomUUID();
 const senioren=["Damen 1","Herren","Damen 2","Damen 3"];
 const jugend=["männliche A-Jugend","weibliche A-Jugend","männliche B-Jugend","weibliche B-Jugend","männliche C-Jugend","weibliche C-Jugend","männliche D-Jugend","weibliche D-Jugend","männliche E-Jugend","weibliche E-Jugend","gemischte F-Jugend","Minis"];
+document.querySelectorAll('[data-app-version]').forEach(el=>el.textContent=APP_VERSION);
+document.querySelectorAll('[data-saison]').forEach(el=>el.textContent=SAISON);
+
+/* ---------- Bedienelemente im Apple-Stil ---------- */
+let toastTimer;
+function toast(text,art='info'){
+ const t=$('toast');clearTimeout(toastTimer);
+ $('toastText').textContent=text;t.className=art;t.hidden=false;
+ toastTimer=setTimeout(()=>{t.classList.add('weg');toastTimer=setTimeout(()=>{t.hidden=true;t.classList.remove('weg');},260);},art==='fehler'?5200:3200);
+}
+function knopfLaedt(button,an){button.classList.toggle('laedt',an);button.disabled=an;button.setAttribute('aria-busy',String(an));}
+function sendeKnopf(text,laedt=false){const b=$('sendenButton');b.querySelector('.knopfText').textContent=text;b.classList.toggle('laedt',laedt);b.setAttribute('aria-busy',String(laedt));}
+function bestaetigen(titel,text,ja='OK',destruktiv=false){
+ const dlg=$('bestaetigenDialog');$('bestaetigenTitel').textContent=titel;$('bestaetigenText').textContent=text;
+ const jaKnopf=$('bestaetigenJa'),neinKnopf=$('bestaetigenNein');
+ jaKnopf.textContent=ja;jaKnopf.classList.toggle('destruktiv',destruktiv);
+ return new Promise(resolve=>{
+  const fertig=wert=>{jaKnopf.onclick=neinKnopf.onclick=dlg.oncancel=null;dlg.close();resolve(wert);};
+  jaKnopf.onclick=()=>fertig(true);neinKnopf.onclick=()=>fertig(false);dlg.oncancel=e=>{e.preventDefault();fertig(false);};
+  dlg.showModal();neinKnopf.focus();
+ });
+}
+function fehlerLoeschen(){
+ document.querySelectorAll('.feldFehler').forEach(el=>el.remove());
+ document.querySelectorAll('.ungueltig').forEach(el=>el.classList.remove('ungueltig'));
+}
+// Zeigt eine Meldung direkt unter dem betroffenen Bereich und scrollt dorthin.
+function feldFehler(el,text){
+ fehlerLoeschen();
+ const zeile=el.closest('.zeile');if(zeile)zeile.classList.add('ungueltig');
+ const anker=el.closest('.karte')||el.closest('.segBlock')||el;
+ const p=document.createElement('p');p.className='feldFehler';p.setAttribute('role','alert');p.textContent=text;
+ anker.after(p);
+ (zeile||anker).scrollIntoView({behavior:'smooth',block:'center'});
+ if(typeof el.focus==='function'&&!el.closest('.segmented'))setTimeout(()=>el.focus({preventScroll:true}),350);
+ const weg=()=>{p.remove();zeile?.classList.remove('ungueltig');};
+ const quelle=el.dataset?.select?$(el.dataset.select):el;
+ quelle.addEventListener('input',weg,{once:true});quelle.addEventListener('change',weg,{once:true});
+ return false;
+}
+function segSync(){
+ document.querySelectorAll('.segmented').forEach(seg=>{
+  const sel=$(seg.dataset.select);
+  seg.querySelectorAll('button').forEach(b=>{const an=sel.value===b.dataset.wert;b.classList.toggle('aktiv',an);b.setAttribute('aria-checked',String(an));b.disabled=sel.disabled;});
+  seg.classList.toggle('gesperrt',sel.disabled);
+ });
+}
+document.querySelectorAll('.segmented').forEach(seg=>{
+ const sel=$(seg.dataset.select);
+ seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  if(sel.disabled||sel.value===b.dataset.wert)return;
+  sel.value=b.dataset.wert;sel.dispatchEvent(new Event('change'));segSync();
+ }));
+});
+function menueUmschalten(auf){
+ const m=$('menue');auf=auf??m.hidden;m.hidden=!auf;$('menueKnopf').setAttribute('aria-expanded',String(auf));
+ if(auf)m.querySelector('button').focus();
+}
+function menueAktion(fn){menueUmschalten(false);fn();}
+document.addEventListener('click',e=>{if(!$('menue').hidden&&!e.target.closest('#menue,#menueKnopf'))menueUmschalten(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('menue').hidden){menueUmschalten(false);$('menueKnopf').focus();}});
+$('kassiererAnmeldung').addEventListener('click',e=>{if(e.target===e.currentTarget)kassiererSchliessen();});
+$('kassiererPasswort').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();auswertungFreigeben();}});
+$('vereinscode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();abrechnungSenden();}});
+function onlineAnzeigen(){$('offlineBanner').hidden=navigator.onLine!==false;}
+addEventListener('online',onlineAnzeigen);addEventListener('offline',onlineAnzeigen);onlineAnzeigen();
+
+function erfolgZeigen(offen,id){
+ const sym=$('erfolgSymbol');
+ sym.className='erfolgSymbol'+(offen?' offen':'');
+ sym.innerHTML=offen
+  ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
+  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="haken" d="m5.5 12.5 4.2 4.2 8.8-9.2"/></svg>';
+ $('erfolgTitel').textContent=offen?'Vorläufig übermittelt':'Abrechnung komplett';
+ $('erfolgText').textContent=offen?'Der vorläufige Beleg und die offene JSON sind gespeichert. Der Kassierer muss die Kassenzählung noch ergänzen. Die Abrechnung ist noch nicht komplett.':'PDF und JSON wurden mit dem Zusatz _komplett in Dropbox gespeichert und geprüft.';
+ $('erfolgVorgang').textContent='Vorgang '+id;
+ $('erfolgDialog').showModal();
+ requestAnimationFrame(()=>TVBFeier.feiern($('feierCanvas'),offen?'konfetti':'feuerwerk'));
+}
+function erfolgSchliessen(){TVBFeier.feierStoppen($('feierCanvas'));$('erfolgDialog').close();}
+$('erfolgDialog').addEventListener('close',()=>TVBFeier.feierStoppen($('feierCanvas')));
+
+/* ---------- Mannschaften ---------- */
 for(const id of ['team1','team2']) {
- const select=$(id);const empty=new Option(id==='team1'?'Bitte auswählen …':'Keine zweite Mannschaft','');select.add(empty);
+ const select=$(id);const empty=new Option(id==='team1'?'Bitte auswählen':'Keine','');select.add(empty);
  for(const [title,teams] of [['Senioren',senioren],['Jugend',jugend]]) {
   const group=document.createElement('optgroup');group.label=title;
   teams.forEach(name=>group.append(new Option(name,name)));select.append(group);
  }
  select.add(new Option('Andere Gruppe …','custom'));
- select.addEventListener('change',()=>{teamsZusammenfassen();speichern();});
+ select.addEventListener('change',()=>{teamsZusammenfassen();speichern();if($(id).value==='custom')$(id+'Eigen').focus();});
  $(id+'Eigen').addEventListener('input',()=>{teamsZusammenfassen();speichern();});
 }
 function teamWert(id){return $(id).value==='custom'?$(id+'Eigen').value.trim():$(id).value;}
@@ -275,70 +562,85 @@ function teamsLaden(d){
  teamsZusammenfassen();
 }
 
-
-function mengeAendern(i,delta){mengen[i]=Math.min(10000,Math.max(0,mengen[i]+delta));const el=document.querySelector(`.menge[data-index="${i}"]`);el.value=mengen[i]||"";berechnen();}
+/* ---------- Waren ---------- */
+function wareMarkieren(i){document.querySelector(`.menge[data-index="${i}"]`)?.closest('.ware').classList.toggle('hatMenge',mengen[i]>0);}
+function mengeAendern(i,delta){mengen[i]=Math.min(10000,Math.max(0,mengen[i]+delta));const el=document.querySelector(`.menge[data-index="${i}"]`);el.value=mengen[i]||"";wareMarkieren(i);berechnen();}
 function artikelSymbol(name){
-const typ=/Kasten/.test(name)?'Kiste':/Flasche/.test(name)?'Flasche':/Dose/.test(name)?'Dose':'';
-const path=typ==='Kiste'?'<rect x="2" y="11" width="26" height="18" rx="2"/><path d="M7 11V5h5v6m6 0V5h5v6M3 18h24M10 18v10m10-10v10"/>':typ==='Flasche'?'<path d="M12 2h6v8l4 6v14H8V16l4-6V2Zm0 5h6M8 20h14"/>':'<rect x="7" y="3" width="17" height="27" rx="4"/><path d="M8 8h15M8 25h15M12 4h7"/>';
-return typ?`<svg class="artikelIcon" viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">${path}</svg>`:'';
+const typ=/Kasten/.test(name)?'Kiste':/Flasche/.test(name)?'Flasche':/Dose/.test(name)?'Dose':'Packung';
+const path=typ==='Kiste'?'<rect x="2" y="11" width="26" height="18" rx="2"/><path d="M7 11V5h5v6m6 0V5h5v6M3 18h24M10 18v10m10-10v10"/>':typ==='Flasche'?'<path d="M12 2h6v8l4 6v14H8V16l4-6V2Zm0 5h6M8 20h14"/>':typ==='Dose'?'<rect x="7" y="3" width="17" height="27" rx="4"/><path d="M8 8h15M8 25h15M12 4h7"/>':'<path d="M6 7h18l-2 22H8L6 7Z"/><path d="M6 7l2-4h14l2 4M11 14h8"/>';
+return `<svg viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
 }
 function renderWaren(){
-$("waren").innerHTML=artikel.map((a,i)=>`
-<div class="item">
-<div><div class="artikelTitel">${artikelSymbol(a[0])}<strong>${a[0]}</strong></div><small>Lieferantenpreis: ${euro(a[1])}</small></div>
-<div class="mengenfeld"><button type="button" class="schritt" aria-label="${a[0]} verringern" onclick="mengeAendern(${i},-1)">−</button><input type="number" min="0" max="10000" step="1" inputmode="numeric" aria-label="Anzahl ${a[0]}" value="${mengen[i]||""}" data-index="${i}" class="menge"><button type="button" class="schritt" aria-label="${a[0]} erhöhen" onclick="mengeAendern(${i},1)">+</button></div>
-</div>`).join("");
+$("waren").innerHTML=artikel.map((a,i)=>{
+const [name,gebinde]=a[0].split(' – ');
+return `<div class="zeile ware${mengen[i]>0?' hatMenge':''}">
+<span class="wareIcon">${artikelSymbol(a[0])}</span>
+<div><span class="wareName">${name.replaceAll('/','/<wbr>')}</span><span class="wareInfo">${gebinde?gebinde+' · ':''}${euro(a[1])}</span></div>
+<div class="stepper"><button type="button" class="schritt" aria-label="${a[0]} verringern" onclick="mengeAendern(${i},-1)">−</button><input type="number" min="0" max="10000" step="1" inputmode="numeric" placeholder="0" aria-label="Anzahl ${a[0]}" value="${mengen[i]||""}" data-index="${i}" class="menge"><button type="button" class="schritt" aria-label="${a[0]} erhöhen" onclick="mengeAendern(${i},1)">+</button></div>
+</div>`;}).join("");
 document.querySelectorAll(".menge").forEach(el=>{
 el.addEventListener("input",()=>{
-const value=Number(el.value);
-mengen[Number(el.dataset.index)]=Number.isFinite(value)?Math.max(0,Math.floor(value)):0;
-berechnen();
+const value=Number(el.value);const i=Number(el.dataset.index);
+mengen[i]=Number.isFinite(value)?Math.min(10000,Math.max(0,Math.floor(value))):0;
+wareMarkieren(i);berechnen();
 });
+el.addEventListener("focus",()=>el.select());
 });
 }
+
+/* ---------- Ausgaben ---------- */
 function renderAusgaben(){
 const root=$("ausgaben");
 root.replaceChildren();
 ausgaben.forEach((a,i)=>{
 const row=document.createElement("div");
-row.className="expense";
+row.className="zeile ausgabe";
 const desc=document.createElement("input");
-desc.placeholder="Auswählen oder eigene Bezeichnung";
-
+desc.placeholder="Eigene Bezeichnung";
 desc.value=a.text||"";
 desc.setAttribute("aria-label","Ausgabe Bezeichnung");
 desc.addEventListener("input",()=>{ausgaben[i].text=desc.value;speichern();});
 const choice=document.createElement("select");choice.setAttribute("aria-label","Ausgabe auswählen");
-const labels=["Bitte auswählen …","Würstchen","Brötchen","Aufschnitt","Brezeln","Schnitzel","Bäcker","Metzger","Lebensmittel","Andere Ausgabe …"];
+const labels=["Bezeichnung wählen","Würstchen","Brötchen","Aufschnitt","Brezeln","Schnitzel","Bäcker","Metzger","Lebensmittel","Andere Ausgabe …"];
 labels.forEach((label,j)=>{const option=document.createElement("option");option.value=j===0?"":j===labels.length-1?"custom":label;option.textContent=label;choice.append(option);});
 const known=labels.slice(1,-1).includes(a.text);
 choice.value=known?a.text:a.text?"custom":"";desc.hidden=choice.value!=="custom";
 choice.addEventListener("change",()=>{desc.hidden=choice.value!=="custom";if(choice.value==="custom"){ausgaben[i].text=desc.value;desc.focus();}else{ausgaben[i].text=choice.value;desc.value=choice.value;}speichern();});
 const nameGroup=document.createElement("div");nameGroup.className="expenseName";nameGroup.append(choice,desc);
-
 const betrag=document.createElement("input");
-betrag.type="number";betrag.min="0";betrag.step="0.01";betrag.inputMode="decimal";
-betrag.placeholder="Euro";betrag.value=a.betrag||"";
+betrag.type="number";betrag.min="0";betrag.step="0.01";betrag.inputMode="decimal";betrag.className="betrag";
+betrag.placeholder="0,00 €";betrag.value=a.betrag||"";
 betrag.setAttribute("aria-label","Ausgabenbetrag in Euro");
 betrag.addEventListener("input",()=>{
 ausgaben[i].betrag=Math.max(0,Number(betrag.value)||0);
 berechnen();
 });
 const del=document.createElement("button");
-del.className="delete";del.textContent="×";del.title="Ausgabe entfernen";
+del.type="button";del.className="loeschen";
+del.innerHTML='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const bez=a.text?'„'+a.text+'“ ':'';
+del.setAttribute("aria-label","Ausgabe "+bez+"entfernen");del.title="Ausgabe entfernen";
 del.onclick=()=>{ausgaben.splice(i,1);renderAusgaben();berechnen();};
-row.append(nameGroup,betrag,del);
+row.append(del,nameGroup,betrag);
 root.append(row);
 });
 }
 function addAusgabe(){
 ausgaben.push({text:"",betrag:0});
 renderAusgaben();berechnen();
+$("ausgaben").lastElementChild?.querySelector('select')?.focus();
 }
+
+/* ---------- Kasse ---------- */
 function kasseRoh(){
-return {modus:['6.0','6.1'].includes(formularVersion)&&!wirdGezaehlt()?'ausstehend':$('zaehlmodus').value,bestand:$('kassenbestand').value===''?null:Number($('kassenbestand').value),
+return {modus:istNeuesFormat(formularVersion)&&!wirdGezaehlt()?'ausstehend':$('zaehlmodus').value,bestand:$('kassenbestand').value===''?null:Number($('kassenbestand').value),
  stueckelung:TVBKasse.STUECKELUNG.map((_,i)=>Number($('stueck'+i).value||0)),
  sonstigeEinnahmen:Number($('sonstigeEinnahmen').value||0),einnahmenText:$('einnahmenText').value};
+}
+function zaehlmodusAnzeigen(){
+ $('direktZaehlung').hidden=$('zaehlmodus').value==='stueckelung';
+ $('stueckelungBlock').hidden=!$('direktZaehlung').hidden;
+ $('stueckelungHinweis').hidden=$('stueckelungBlock').hidden;
 }
 function kasseLaden(k){
  $('zaehlmodus').value=k?.modus==='stueckelung'?'stueckelung':'betrag';
@@ -347,17 +649,17 @@ function kasseLaden(k){
  $('einnahmenText').value=k?.einnahmenText || '';
  $('alteEinnahmen').hidden=!(Number(k?.sonstigeEinnahmen)>0);$('alteEinnahmenWert').textContent=euro(Number(k?.sonstigeEinnahmen)||0)+' '+(k?.einnahmenText||'');
  TVBKasse.STUECKELUNG.forEach((_,i)=>{$('stueck'+i).value=k?.stueckelung?.[i]||'';});
- $('direktZaehlung').hidden=$('zaehlmodus').value==='stueckelung';
- $('stueckelungBlock').hidden=!$('direktZaehlung').hidden;
+ zaehlmodusAnzeigen();
  zustaendigkeitAnzeigen();
 }
 function kassenAuswertungAktualisieren(getraenke,sonstige){
- const alt=storedSubmission && !['5.0','6.0','6.1'].includes(storedSubmission.abrechnung.version);
+ const alt=storedSubmission && !ZAEHL_FORMATE.includes(storedSubmission.abrechnung.version);
  $('kasseAbschnitt').hidden=!!alt;$('auswerteBlock').hidden=!!alt||!auswertungEntsperrt;$('alteSummen').hidden=!alt||!auswertungEntsperrt;
+ $('kassiererOeffnen').hidden=auswertungEntsperrt;
  zustaendigkeitAnzeigen();
  const root=$('kassenAuswertung');root.replaceChildren();$('kassenWarnung').textContent='';
  if(alt)return;
- if(['6.0','6.1'].includes(formularVersion)&&kasseRoh().modus==='ausstehend'){$('zaehlSumme').textContent='Noch nicht gezählt';if(auswertungEntsperrt)$('kassenWarnung').textContent='Der Kassierer soll zählen. Eine endgültige Auswertung ist erst nach Laden der offenen JSON und Ergänzen der Zählung möglich.';return;}
+ if(istNeuesFormat(formularVersion)&&kasseRoh().modus==='ausstehend'){$('zaehlSumme').textContent='Noch nicht gezählt';if(auswertungEntsperrt)$('kassenWarnung').textContent='Der Kassierer soll zählen. Eine endgültige Auswertung ist erst nach Laden der offenen JSON und Ergänzen der Zählung möglich.';return;}
  let k,a;
  try{
    k=TVBKasse.validiereKasse(kasseRoh());
@@ -373,7 +675,6 @@ function kassenAuswertungAktualisieren(getraenke,sonstige){
  ['− Kassenbestand zu Beginn',a.anfangCent],
  ...(a.sonstigeEinnahmenCent?[['− Mitgezählte Einnahmen aus Altbeleg',a.sonstigeEinnahmenCent]]:[]),
  ['= Einnahmen aus Verkauf',a.verkaufCent],
-
  ['Bestand nach Kassenzählung',a.bestandCent],
  ['− Wareneinsatz plus Getränke (separat abführen)',a.getraenkeCent],
  ['= Endbestand',a.endbestandCent],
@@ -384,23 +685,26 @@ function kassenAuswertungAktualisieren(getraenke,sonstige){
  ['Auszahlung Abteilung / zur Einzahlung',a.abteilungCent],
  ['Verbleibender Kassenbestand',a.uebertragCent]
  ];
- for(const [label,value] of rows){const row=document.createElement('div');row.className='total'+(label.startsWith('Auszahlung')?' grand':'');const l=document.createElement('span');l.textContent=label;const v=document.createElement('b');v.textContent=euro(value/100);row.append(l,v);root.append(row);}
+ for(const [label,value] of rows){
+  const row=document.createElement('div');
+  row.className='zeile wertZeile'+(label.startsWith('Auszahlung')?' auszahlung':label.startsWith('=')?' zwischen':'');
+  const l=document.createElement('span');l.textContent=label;const v=document.createElement('b');v.textContent=euro(value/100);row.append(l,v);root.append(row);
+ }
  const hints=[];
  if(a.fehlbetragCent>0)hints.push('Fehlbetrag: '+euro(a.fehlbetragCent/100)+'. Keine Gewinnauszahlung. Dieser Betrag fehlt für Getränkegeld und den neuen Kassenbestand.');
  if(a.verkaufCent<0)hints.push('Die rechnerischen Verkaufseinnahmen sind negativ. Bitte Zählung und Ausgaben prüfen.');
  $('kassenWarnung').textContent=hints.join(' ');
 }
 TVBKasse.STUECKELUNG.forEach((wert,i)=>{
- const row=document.createElement('div');row.className='item';
- const label=document.createElement('label');label.htmlFor='stueck'+i;label.textContent=euro(wert/100);
+ const row=document.createElement('div');row.className='zeile';
+ const label=document.createElement('label');label.htmlFor='stueck'+i;label.textContent=euro(wert/100)+(wert>=500?' Schein':' Münze');
  const input=document.createElement('input');input.id='stueck'+i;input.type='number';input.min='0';input.max='100000';input.step='1';input.inputMode='numeric';input.placeholder='Anzahl';
  input.addEventListener('input',berechnen);row.append(label,input);$('stueckelungFelder').append(row);
 });
 $('zaehlVerantwortung').addEventListener('change',()=>{zustaendigkeitAnzeigen();berechnen();});
 ['kassenbestand','sonstigeEinnahmen','einnahmenText'].forEach(id=>$(id).addEventListener('input',berechnen));
-$('zaehlmodus').addEventListener('change',()=>{
- $('direktZaehlung').hidden=$('zaehlmodus').value==='stueckelung';$('stueckelungBlock').hidden=!$('direktZaehlung').hidden;berechnen();
-});
+$('zaehlmodus').addEventListener('change',()=>{zaehlmodusAnzeigen();berechnen();});
+
 function berechnen(){
 const getraenke=artikel.reduce((s,a,i)=>s+a[1]*(mengen[i]||0),0);
 const sonstige=ausgaben.reduce((s,a)=>s+(Number(a.betrag)||0),0);
@@ -410,6 +714,7 @@ $("sum1").textContent=euro(getraenke);
 $("sum2").textContent=euro(sonstige);
 $("gesamt").textContent=euro(getraenke+sonstige);
 kassenAuswertungAktualisieren(getraenke,sonstige);
+segSync();
 speichern();
 return {getraenke,sonstige,gesamt:getraenke+sonstige};
 }
@@ -448,9 +753,9 @@ function laden(){
 try{
 const d=JSON.parse(localStorage.getItem(key)||"null");
 if(!d)return;
-const legacy=(storedSubmission&&!['6.0','6.1'].includes(d.version))||(!['6.0','6.1'].includes(d.version)&&Number(d.kasse?.sonstigeEinnahmen)>0);
-const pfandAlt=!['6.0','6.1'].includes(d.version)&&d.waren?.[14]?.anzahl>0;
-formularVersion=legacy||pfandAlt||['6.0','6.1'].includes(d.version)?d.version:'6.1';
+const legacy=(storedSubmission&&!istNeuesFormat(d.version))||(!istNeuesFormat(d.version)&&Number(d.kasse?.sonstigeEinnahmen)>0);
+const pfandAlt=!istNeuesFormat(d.version)&&d.waren?.[14]?.anzahl>0;
+formularVersion=legacy||pfandAlt||istNeuesFormat(d.version)?d.version:DATENFORMAT;
 artikel=aktuelleArtikel;
 if(legacy||pfandAlt){artikel=[...aktuelleArtikel];artikel.splice(14,0,['Pfand – Flasche',.25]);if(d.waren?.length===15)artikel=artikel.slice(0,15);}
 $("datum").value=d.datum||"";
@@ -459,34 +764,30 @@ $("person").value=d.person||"";
 $("quittungen").checked=!!d.quittungen;
 $("bemerkung").value=d.bemerkung||"";
 kasseLaden(ladeKasseMitMigration(d.kasse,d.version));
-if(['6.0','6.1'].includes(d.version))$('zaehlVerantwortung').value=d.kassenVerantwortung||'';
+if(istNeuesFormat(d.version))$('zaehlVerantwortung').value=d.kassenVerantwortung||'';
 zustaendigkeitAnzeigen();
-if(Array.isArray(d.waren))mengen=artikel.map((_,i)=>Math.max(0,Math.floor(Number(d.waren[!['6.0','6.1'].includes(d.version)&&['6.0','6.1'].includes(formularVersion)&&i>=14?i+1:i]?.anzahl)||0)));
+if(Array.isArray(d.waren))mengen=artikel.map((_,i)=>Math.max(0,Math.floor(Number(d.waren[!istNeuesFormat(d.version)&&istNeuesFormat(formularVersion)&&i>=14?i+1:i]?.anzahl)||0)));
 if(Array.isArray(d.ausgaben))ausgaben=d.ausgaben;
 }catch(e){}
 }
 function validieren(){
+fehlerLoeschen();
 teamsZusammenfassen();
-if(!teamWert('team1') || ($('team2').value==='custom' && !teamWert('team2'))){alert('Bitte die Mannschaft bzw. den Namen der ausgewählten Gruppe eingeben.');return false;}
-if(teamWert('team2') && teamWert('team1').toLocaleLowerCase('de-DE')===teamWert('team2').toLocaleLowerCase('de-DE')){alert('Bitte zwei unterschiedliche Mannschaften oder Gruppen auswählen.');return false;}
-if($('mannschaft').value.length>120){alert('Die Gruppenbezeichnungen sind zusammen zu lang (höchstens 120 Zeichen).');return false;}
-
-if(!$("datum").value||!$("mannschaft").value.trim()||!$("person").value.trim()){
-alert("Bitte zuerst Datum, Mannschaft und Name ausfüllen.");
-return false;
-}
-if(ausgaben.some(a=>Number(a.betrag)>0&&!String(a.text).trim())){
-alert("Bitte alle sonstigen Ausgaben mit einer Bezeichnung versehen.");
-return false;
-}
-if(ausgaben.some(a=>Number(a.betrag)>0)&&!$("quittungen").checked){
-alert("Bitte bestätigen, dass die Quittungen in der Kasse liegen.");
-return false;
-}
-if(!storedSubmission || ['5.0','6.0','6.1'].includes(storedSubmission.abrechnung.version)) {
- if(['6.0','6.1'].includes(formularVersion)&&!['hallendienst','kassierer'].includes($('zaehlVerantwortung').value)){alert('Bitte auswählen, wer die Kasse zählt.');return false;}
- try{const raw=kasseRoh();TVBKasse.validiereKasse(raw.modus==='ausstehend'?{...raw,modus:'betrag',bestand:0}:raw);}catch(error){alert(error.message);return false;}
- for(const a of ausgaben){try{TVBKasse.geldCent(a.betrag,'Ausgabe');}catch(error){alert(error.message);return false;}}
+if(!$("datum").value)return feldFehler($('datum'),'Bitte das Datum eingeben.');
+if(!teamWert('team1'))return feldFehler($('team1').value==='custom'?$('team1Eigen'):$('team1'),'Bitte die Mannschaft bzw. den Namen der Gruppe eingeben.');
+if($('team2').value==='custom' && !teamWert('team2'))return feldFehler($('team2Eigen'),'Bitte den Namen der zweiten Gruppe eingeben.');
+if(teamWert('team2') && teamWert('team1').toLocaleLowerCase('de-DE')===teamWert('team2').toLocaleLowerCase('de-DE'))return feldFehler($('team2'),'Bitte zwei unterschiedliche Mannschaften oder Gruppen auswählen.');
+if($('mannschaft').value.length>120)return feldFehler($('team1'),'Die Gruppenbezeichnungen sind zusammen zu lang (höchstens 120 Zeichen).');
+if(!$("person").value.trim())return feldFehler($('person'),'Bitte deinen Namen eingeben.');
+const ohneText=ausgaben.findIndex(a=>Number(a.betrag)>0&&!String(a.text).trim());
+if(ohneText>=0)return feldFehler($('ausgaben').children[ohneText].querySelector('select'),'Bitte alle sonstigen Ausgaben mit einer Bezeichnung versehen.');
+if(ausgaben.some(a=>Number(a.betrag)>0)&&!$("quittungen").checked)return feldFehler($('quittungen'),'Bitte bestätigen, dass die Quittungen in der Kasse liegen.');
+if(!storedSubmission || ZAEHL_FORMATE.includes(storedSubmission.abrechnung.version)) {
+ if(istNeuesFormat(formularVersion)&&!['hallendienst','kassierer'].includes($('zaehlVerantwortung').value))return feldFehler(document.querySelector('[data-select="zaehlVerantwortung"]'),'Bitte auswählen, wer die Kasse zählt.');
+ if(kasseRoh().modus==='betrag'&&$('kassenbestand').value==='')return feldFehler($('kassenbestand'),'Bitte den gezählten Kassenbestand eingeben.');
+ try{const raw=kasseRoh();TVBKasse.validiereKasse(raw.modus==='ausstehend'?{...raw,modus:'betrag',bestand:0}:raw);}
+ catch(error){return feldFehler($('zaehlmodus').value==='stueckelung'?$('stueck0'):$('kassenbestand'),error.message);}
+ for(const [i,a] of ausgaben.entries()){try{TVBKasse.geldCent(a.betrag,'Ausgabe');}catch(error){return feldFehler($('ausgaben').children[i].querySelector('.betrag'),error.message);}}
 }
 return true;
 }
@@ -495,8 +796,9 @@ if(!validieren())return;
 const record=storedSubmission;
 const d=record?.abrechnung||daten();
 const id=record?.id||previewId;
-if(['6.0','6.1'].includes(d.version)&&d.kasse.modus!=='ausstehend'&&!kassiererPasswort){zeigeKassiererAnmeldung('Für die vollständige PDF-Vorschau bitte die Auswertung freigeben. Übermitteln ist auch ohne diese Vorschau möglich.');return;}
-const button=document.querySelector('button[onclick="pdfErstellen()"]');button.disabled=true;
+if(istNeuesFormat(d.version)&&d.kasse.modus!=='ausstehend'&&!kassiererPasswort){zeigeKassiererAnmeldung('Für die vollständige PDF-Vorschau bitte die Auswertung freigeben. Übermitteln ist auch ohne diese Vorschau möglich.','pdf');return;}
+if(navigator.onLine===false){toast('Für die PDF-Vorschau wird eine Internetverbindung benötigt.','fehler');return;}
+const button=$('pdfButton');knopfLaedt(button,true);
 try {
  const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,abrechnung:d,...schutzDaten()})});
  if(!response.ok){const error=await response.json();throw Error(error.error||'PDF konnte nicht erstellt werden.');}
@@ -506,23 +808,24 @@ try {
  const filename=response.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/)?.[1];
  link.download=record?.receipt?.dateien?.pdf?.name || (filename?decodeURIComponent(filename):'Hallenverkauf.pdf');
  link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-}catch(error){alert(error.message);}finally{button.disabled=false;}
+}catch(error){toast(error.message,'fehler');}finally{knopfLaedt(button,false);}
 }
-function zuruecksetzen(){
+async function zuruecksetzen(){
 if(sending || (storedSubmission && storedSubmission.state!=="sent")){
-alert("Die Übermittlung ist noch offen. Bitte mit derselben Vorgangsnummer erneut senden oder den Kassenwart kontaktieren.");return;
+toast("Die Übermittlung ist noch offen. Bitte mit derselben Vorgangsnummer erneut senden oder den Kassenwart kontaktieren.",'fehler');return;
 }
-
-if(!confirm("Alle Eingaben löschen und eine neue Abrechnung beginnen?"))return;
+// Nach bestätigter Übermittlung liegen die Daten sicher in Dropbox – dann ohne Rückfrage.
+if(storedSubmission?.state!=="sent" && !await bestaetigen('Neue Abrechnung beginnen?','Alle Eingaben auf diesem Gerät werden gelöscht.','Löschen',true))return;
 clearTimeout(saveTimer);
 localStorage.removeItem(sendKey);
 localStorage.removeItem("tvb_pending_submission_id");
-storedSubmission=null;importKontext=null;localStorage.removeItem(importKey);formularVersion='6.1';artikel=aktuelleArtikel;auswertungEntsperrt=false;kassiererPasswort='';$('auswertungDetails').open=false;$('kassiererAnmeldung').open=false;$('authStatus').textContent='Die Auswertung wird erst nach Passwortprüfung angezeigt.';$('jsonDatei').hidden=true;
+storedSubmission=null;importKontext=null;localStorage.removeItem(importKey);formularVersion=DATENFORMAT;artikel=aktuelleArtikel;auswertungEntsperrt=false;kassiererPasswort='';$('auswertungDetails').open=false;kassiererSchliessen();sheetZustand();$('authStatus').textContent='Die Auswertung wird erst nach Passwortprüfung angezeigt.';$('importStatus').textContent='';
 previewId=crypto.randomUUID();
-lockForm(false);
+lockForm(false);fehlerLoeschen();
 $("sendenButton").disabled=false;
-$("sendenButton").textContent="Abrechnung an Kassenwart übermitteln";
+sendeKnopf("Abrechnung übermitteln");
 $("sendeStatus").textContent="Noch nicht übermittelt";
+$('neuNachSenden').hidden=true;
 localStorage.removeItem(key);
 mengen=Array(artikel.length).fill(0);
 ausgaben=[];
@@ -533,6 +836,8 @@ $("quittungen").checked=false;
 $("bemerkung").value="";
 kasseLaden();$('zaehlVerantwortung').value='';zustaendigkeitAnzeigen();
 renderWaren();renderAusgaben();berechnen();
+scrollTo({top:0,behavior:'smooth'});
+toast('Neue Abrechnung begonnen.','ok');
 }
 ["datum","mannschaft","person","quittungen","bemerkung"].forEach(id=>{
 $(id).addEventListener("input",speichern);
@@ -541,22 +846,22 @@ $(id).addEventListener("change",speichern);
 $("datum").value=new Date().toLocaleDateString("en-CA");
 laden();renderWaren();renderAusgaben();berechnen();lockForm(false);
 
-
 function lockForm(locked) {
   document.querySelectorAll("main input,main select,main textarea,main button").forEach(el=>{
-    if(el.closest('#kassiererWerkzeuge')||el.closest('#schnellAktionen')||el.getAttribute('onclick')==='zeigeKassiererAnmeldung()'||["kassiererPasswort","auswertungFreigeben","auswertungSperren"].includes(el.id)||el.id==="vereinscode" || el.id==="sendenButton" ||
-       ["pdfErstellen()","zuruecksetzen()"].includes(el.getAttribute("onclick"))) return;
+    if(el.closest('.segmented') || el.hasAttribute('data-immer')) return;
     const countInput=['kassenbestand','zaehlmodus'].includes(el.id)||el.id.startsWith('stueck');
     el.disabled=locked||!!(importKontext&&!countInput);
   });
+  segSync();
 }
 function restoreSubmission(record) {
   storedSubmission=record;
   localStorage.setItem(key,JSON.stringify(record.abrechnung));
   laden(); renderWaren(); renderAusgaben(); berechnen(); lockForm(true);
   $("sendenButton").disabled=record.state==="sent";
-  $("sendenButton").textContent=record.state==="sent" ? "Erfolgreich übermittelt" : "Dieselbe Abrechnung erneut übermitteln";
+  sendeKnopf(record.state==="sent" ? "Erfolgreich übermittelt" : "Dieselbe Abrechnung erneut übermitteln");
   $("sendeStatus").textContent=(record.state==="sent" ? "PDF und JSON bestätigt. Vorgang: " : "Übermittlung offen. Vorgang: ")+record.id;
+  $('neuNachSenden').hidden=record.state!=="sent";
 }
 try {
   const record=JSON.parse(localStorage.getItem(sendKey)||"null");
@@ -597,16 +902,20 @@ async function sendSubmission() {
     if(!record && !validieren()) return;
     const code=$("vereinscode").value.trim();
     const sendingData=record?.abrechnung||daten();
-    const imported=['6.0','6.1'].includes(sendingData.version)&&sendingData.kassenVerantwortung==='kassierer'&&sendingData.kasse.modus!=='ausstehend';
-    if(imported&&!kassiererPasswort){zeigeKassiererAnmeldung('Zum Abschließen der geladenen Abrechnung bitte das Kassierer-Passwort erneut eingeben.');return;}
-    if(!imported&&!code) {alert('Bitte den Vereinscode eingeben.');return;}
+    const imported=istNeuesFormat(sendingData.version)&&sendingData.kassenVerantwortung==='kassierer'&&sendingData.kasse.modus!=='ausstehend';
+    if(imported&&!kassiererPasswort){zeigeKassiererAnmeldung('Zum Abschließen der geladenen Abrechnung bitte das Kassierer-Passwort erneut eingeben.','abschluss');return;}
+    if(!imported&&!code) {feldFehler($('vereinscode'),'Bitte den Vereinscode eingeben.');return;}
+    if(navigator.onLine===false) {
+      status.textContent="Keine Internetverbindung. Die Eingaben bleiben gespeichert – bitte senden, sobald das Gerät wieder online ist.";
+      toast('Keine Internetverbindung.','fehler');return;
+    }
     if(!record) record={id:previewId,abrechnung:daten(),state:"pending",attempts:0};
     record.attempts=(record.attempts||0)+1;
     // Vor jedem Netzwerkzugriff sichern; bei Speicherfehler wird nichts gesendet.
     localStorage.setItem(sendKey,JSON.stringify(record));
     restoreSubmission(record);
-    button.disabled=true; button.textContent="Wird übermittelt …";
-    status.textContent="PDF wird erstellt. PDF und JSON werden in Dropbox geprüft …";
+    button.disabled=true; sendeKnopf("Wird übermittelt …",true);
+    status.textContent="PDF wird erstellt. PDF und JSON werden in Dropbox geprüft … Das kann bis zu einer Minute dauern.";
     let response;
     try {
       response=await fetch("/api/submit",{
@@ -622,7 +931,7 @@ async function sendSubmission() {
         }
         throw Error(result.error||"Übermittlung nicht bestätigt.");
       }
-      if(result.id!==record.id || !["4.1","4.2","4.3","4.4","4.5","5.0","6.0","6.1"].includes(result.version) || result.status!=="vollständig" ||
+      if(result.id!==record.id || !BEKANNTE_FORMATE.includes(result.version) || result.status!=="vollständig" ||
          !result.dateien?.json?.hash || !result.dateien?.pdf?.hash) throw Error("Bestätigung für PDF und JSON fehlt.");
       record.state="sent"; record.receipt=result;
       localStorage.setItem(sendKey,JSON.stringify(record));
@@ -630,16 +939,16 @@ async function sendSubmission() {
       $("vereinscode").value="";
       const offen=result.abrechnungsstatus==='offen';
       status.textContent=(offen?'Vorläufiger Beleg und offene JSON erfolgreich übermittelt. Der Kassierer soll noch zählen. Vorgang: ':'Komplette Abrechnung: PDF und JSON erfolgreich in Dropbox bestätigt. Vorgang: ')+record.id;
-      $('erfolgText').textContent=offen?'Der vorläufige Beleg und die offene JSON sind gespeichert. Der Kassierer muss die Kassenzählung noch ergänzen. Die Abrechnung ist noch nicht komplett.':'Die komplette Abrechnung wurde mit dem Zusatz _komplett in Dropbox gespeichert.';
-      $("erfolgDialog").showModal();
+      erfolgZeigen(offen,record.id);
     } catch(error) {
       status.textContent="Nicht als erfolgreich bestätigt: "+error.message+
         (storedSubmission ? " Bitte dieselbe Abrechnung erneut übermitteln. Vorgang: "+record.id : " Bitte Eingaben korrigieren.");
-      button.disabled=false; button.textContent="Erneut übermitteln";
+      button.disabled=false; sendeKnopf("Erneut übermitteln");
+      toast('Übermittlung nicht bestätigt.','fehler');
     }
   } catch {
     status.textContent="Übermittlung angehalten: Der lokale Vorgang konnte nicht sicher gespeichert oder gelesen werden. Bitte den Kassenwart kontaktieren.";
-    button.disabled=false;
+    button.disabled=false; sendeKnopf("Erneut übermitteln");
   }
 }
 </script>

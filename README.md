@@ -1,4 +1,4 @@
-# TVB Hallenverkauf – Version 6.1
+# TVB Hallenverkauf – Version 6.2
 
 Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027
 
@@ -20,7 +20,7 @@ Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzuric
 
 ## Manuell aktualisieren
 
-1. TVB-Hallenverkauf-V6.1.zip entpacken.
+1. TVB-Hallenverkauf-V6.2.zip entpacken.
 2. Den gesamten Inhalt des entpackten Ordners im GitHub-Repository
    Kimbel25/TVB-Hallenverkauf auf oberster Ebene hochladen. Alle mitgelieferten
    Dateien ersetzen bzw. hinzufügen und gemeinsam committen. Nicht die ZIP oder
@@ -33,14 +33,40 @@ Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzuric
 5. Beide nachfolgenden Abläufe mit Testdaten prüfen, einschließlich PDF und JSON
    in Dropbox. Das Paket wurde lokal geprüft; die echte Veröffentlichung erfolgt manuell.
 
+## Neu in Version 6.2 (nur Oberfläche)
+
+Reines Oberflächen-Update. Server, Berechnung, PDF-Layout, Dropbox-Pfade (weiterhin V6_1)
+und das Datenformat 6.1 bleiben unverändert. Secrets müssen nicht angepasst werden.
+
+- Gestaltung nach Apple-Richtlinien: gruppierte Listen wie in den iPhone-Einstellungen,
+  Plus/Minus-Stepper, Schalter für die Quittungsbestätigung, Segmentauswahl für
+  „Wer zählt die Kasse?“ und „Art der Kassenzählung“, Dunkelmodus, iPhone-Ränder (Notch).
+- „Neue Abrechnung“, „JSON-Abrechnung laden“ und „Kassierer-Bereich“ liegen jetzt
+  dezent im Menü „⋯“ oben rechts. Die Kassierer-Anmeldung öffnet sich als Blatt von unten.
+  Die doppelten Knöpfe in der Mitte und unten entfallen.
+- Nur noch „Abrechnung übermitteln“ ist ein roter Hauptknopf; „PDF-Vorschau ansehen“ ist
+  bewusst zurückhaltend gestaltet. Nach erfolgreicher Übermittlung erscheint
+  „Neue Abrechnung beginnen“ (ohne Rückfrage, da die Daten in Dropbox liegen).
+- Erfolgsanimation: offene Abrechnung (Kassierer zählt später) mit Konfetti und
+  orangem Symbol, komplette Abrechnung mit Feuerwerk und grünem Haken. Nur nach
+  bestätigtem Upload. Bei „Bewegung reduzieren“ (iPhone-Bedienungshilfen) keine Animation.
+- Fehlermeldungen erscheinen direkt am betroffenen Feld statt als Browser-Popup; die
+  Seite scrollt dorthin. Rückfragen erscheinen als iPhone-typischer Dialog.
+- Lade-Kreisel beim Senden, Freigeben und bei der PDF-Vorschau; Hinweis bei fehlender
+  Internetverbindung (Senden wird dann gar nicht erst versucht).
+- Versionsangaben stehen zentral am Anfang von assets/ablauf.js
+  (APP_VERSION, DATENFORMAT, NEUE_FORMATE, SAISON).
+
+Hinweis für das iPhone: Die geänderte Statusleisten-Darstellung wirkt bei einem bereits
+auf dem Home-Bildschirm abgelegten Symbol erst nach erneutem „Zum Home-Bildschirm“.
+
 ## Neu in Version 6.1
 
 Sonstige Bareinnahmen/Spenden entfallen bei neuen Abrechnungen vollständig im
 Formular und auf dem Beleg. Der gesamte gezählte Bestand fließt in die Berechnung ein.
-Zwischen Abschnitt 1 (Hallendienst) und 2 stehen zusätzlich die Knöpfe
-„JSON-Abrechnung laden“ und „Neue Abrechnung“. Die bisherigen Knöpfe unten bleiben.
-Beim Laden ohne Freigabe öffnet sich das Passwortfeld direkt oben und erhält den Fokus.
-Passwort eingeben, „Auswertung freigeben“ drücken, danach „JSON-Datei auswählen“.
+„JSON-Abrechnung laden“ und „Neue Abrechnung“ (seit 6.2 im Menü „⋯“ oben rechts).
+Beim Laden ohne Freigabe öffnet sich zuerst das Passwortfeld.
+Passwort eingeben, „Freigeben“ tippen, danach „Offene JSON-Datei auswählen …“.
 Die Auswahl der zuständigen Person heißt jetzt „Kassierer soll zählen“.
 
 ## Weg A: Hallendienst zählt
@@ -69,7 +95,7 @@ Nach bestätigtem Upload heißen PDF und JSON hinten _komplett.
    OFFENEN Abrechnung. PDF und JSON liegen in Dropbox, Gewinn und Auszahlungen
    sind noch nicht berechnet. Diese Dateinamen haben noch kein _komplett.
 4. Als Kassierer die originale offene JSON aus Dropbox auf den Computer laden.
-5. In der App „JSON-Abrechnung laden“ anklicken, den Kassierer-Bereich mit dem
+5. In der App über „⋯“ → „JSON-Abrechnung laden“ öffnen, den Kassierer-Bereich mit dem
    Passwort freigeben und anschließend die offene JSON auswählen.
 6. Nach der Prüfung sind Datum, Namen, Mannschaften, Mengen, Ausgaben, gegebenenfalls alte Einnahmen
    und Bemerkungen gesperrt. Nur noch die Kassenzählung ergänzen.
