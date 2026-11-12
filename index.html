@@ -19,7 +19,7 @@
 :root{
  --bg:#f2f2f7;--karte:#fff;--text:#000;--text2:rgba(60,60,67,.6);--text3:rgba(60,60,67,.3);
  --sep:rgba(60,60,67,.29);--fill:rgba(118,118,128,.12);--fill2:rgba(118,118,128,.2);
- --tint:#c41222;--tintBg:rgba(196,18,34,.1);--kopf:#b8091a;--rot:#ff3b30;--gruen:#34c759;--orange:#ff9500;
+ --tint:#c41222;--tintBg:rgba(196,18,34,.1);--kopf:#b8091a;--rot:#ff3b30;--gruen:#34c759;--orange:#ff9500;--blau:#007aff;
  --segAktiv:#fff;--schalterAus:#e9e9ea;--material:rgba(250,250,250,.86);--alert:rgba(242,242,242,.92);
  --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' viewBox='0 0 10 16'%3E%3Cpath d='M1.5 6 5 2.5 8.5 6M1.5 10 5 13.5 8.5 10' fill='none' stroke='%233c3c4399' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,"Segoe UI",Roboto,Arial,sans-serif;
@@ -28,7 +28,7 @@
 @media (prefers-color-scheme:dark){:root{
  --bg:#000;--karte:#1c1c1e;--text:#fff;--text2:rgba(235,235,245,.6);--text3:rgba(235,235,245,.3);
  --sep:rgba(84,84,88,.65);--fill:rgba(118,118,128,.24);--fill2:rgba(118,118,128,.32);
- --tint:#ff4d5e;--tintBg:rgba(255,77,94,.16);--kopf:#9e0715;--rot:#ff453a;--gruen:#30d158;--orange:#ff9f0a;
+ --tint:#ff4d5e;--tintBg:rgba(255,77,94,.16);--kopf:#9e0715;--rot:#ff453a;--gruen:#30d158;--orange:#ff9f0a;--blau:#0a84ff;
  --segAktiv:#636366;--schalterAus:#39393d;--material:rgba(44,44,46,.86);--alert:rgba(44,44,46,.94);
  --chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='16' viewBox='0 0 10 16'%3E%3Cpath d='M1.5 6 5 2.5 8.5 6M1.5 10 5 13.5 8.5 10' fill='none' stroke='%23ebebf599' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }}
@@ -100,7 +100,7 @@ textarea{display:block;width:100%;border:0;background:transparent;padding:12px 1
 .wareIcon svg{width:26px;height:28px}
 .wareName{display:block;font-size:16px;overflow-wrap:break-word;hyphens:auto}
 .wareInfo{display:block;font-size:13px;color:var(--text2);margin-top:2px}
-.stepper{display:grid;grid-template-columns:38px 46px 38px;align-items:center;height:34px;background:var(--fill);border-radius:9px;overflow:hidden}
+.stepper{justify-self:end;display:grid;grid-template-columns:38px 46px 38px;align-items:center;height:34px;background:var(--fill);border-radius:9px;overflow:hidden}
 .stepper button{height:100%;font-size:22px;font-weight:400;line-height:1;color:var(--text);display:grid;place-items:center}
 .stepper button:active{background:var(--fill2)}
 .stepper button:disabled{color:var(--text3)}
@@ -177,7 +177,7 @@ details>summary svg.schloss{width:20px;height:20px;color:var(--tint)}
 .auswertungInhalt .karte{margin:4px 16px 0;background:var(--bg)}
 .auswertungInhalt .karte .zeile{background:transparent}
 
-.status{font-size:13px;color:var(--text2);text-align:center;margin:12px 16px 0;line-height:1.4}
+.status{font-size:13px;color:var(--text2);text-align:center;margin:12px 16px 0;line-height:1.4;white-space:pre-line}
 footer{text-align:center;font-size:12px;color:var(--text2);padding:8px 20px calc(env(safe-area-inset-bottom) + 24px)}
 
 /* Toast */
@@ -217,6 +217,13 @@ dialog.feier::backdrop{background:rgba(0,0,0,.45)}
 .feier[open] .alert{animation:alertEin .35s cubic-bezier(.2,.9,.3,1.25)}
 .erfolgSymbol{width:64px;height:64px;margin:4px auto 12px;border-radius:50%;display:grid;place-items:center;background:var(--gruen);color:#fff}
 .erfolgSymbol.offen{background:var(--orange)}
+.erfolgSymbol.test{background:var(--blau)}
+.testSchritte{list-style:none;margin:12px 0 0;padding:0;text-align:left;font-size:13px;line-height:1.35}
+.testSchritte li{display:grid;grid-template-columns:18px 1fr;gap:6px;padding:4px 0}
+.testSchritte li+li{border-top:.5px solid var(--sep)}
+.testSchritte .m{font-weight:700}
+.testSchritte .ok .m{color:var(--gruen)}.testSchritte .warnung .m{color:var(--orange)}.testSchritte .fehler .m{color:var(--rot)}.testSchritte .übersprungen .m{color:var(--text3)}
+.testSchritte small{display:block;color:var(--text2)}
 .erfolgSymbol svg{width:34px;height:34px}
 .erfolgSymbol path.haken{stroke-dasharray:40;stroke-dashoffset:40;animation:hakenZiehen .45s .2s ease-out forwards}
 @keyframes hakenZiehen{to{stroke-dashoffset:0}}
@@ -314,7 +321,7 @@ dialog.feier::backdrop{background:rgba(0,0,0,.45)}
 <p class="fussnote" id="kassiererHinweis" hidden>Der Kassierer zählt später. Du übermittelst zunächst einen vorläufigen Beleg und eine offene JSON ohne Gewinnberechnung.</p>
 <p class="fussnote" id="importHinweis" hidden>Geprüfte JSON geladen: Nur die Kassenzählung kann ergänzt werden. Die übrigen Angaben bleiben erhalten.</p>
 <div id="kassenZaehlbereich" hidden>
-<div class="karte" style="margin-top:16px"><div class="zeile"><span>Kassenbestand zu Beginn</span><b style="text-align:right;font-weight:400;color:var(--text2)">130,00 € (fest)</b></div></div>
+<div class="karte" style="margin-top:16px"><div class="zeile"><span>Kassenbestand zu Beginn</span><b style="text-align:right;font-weight:400;color:var(--text2);white-space:nowrap">130,00 € (fest)</b></div></div>
 <p class="fussnote">Zähle nach dem Verkauf und nach den bereits entnommenen sonstigen Ausgaben. Getränkegeld und die Auszahlungen an Mannschaft und Abteilung dürfen noch nicht entnommen sein.</p>
 <div class="segBlock">
 <div class="segLabel" id="zaehlmodusLabel">Art der Kassenzählung</div>
@@ -329,7 +336,7 @@ dialog.feier::backdrop{background:rgba(0,0,0,.45)}
 <div id="stueckelungBlock" hidden><div id="stueckelungFelder"></div></div>
 <div class="zeile summe trennOben"><span>Gezählter Bestand</span><b id="zaehlSumme">–</b></div>
 </div>
-<p class="fussnote" id="stueckelungHinweis">Bei „Scheine &amp; Münzen“ für jede Sorte die Anzahl eingeben – die App addiert automatisch.</p>
+<p class="fussnote" id="stueckelungHinweis">Für jede Sorte die Anzahl mit − und + einstellen oder direkt eintippen – die App addiert automatisch.</p>
 </div>
 <div id="alteEinnahmen" hidden><p class="fussnote">Mitgezählte sonstige Einnahmen aus der älteren Abrechnung (bleiben erhalten): <b id="alteEinnahmenWert"></b></p><input type="hidden" id="sonstigeEinnahmen" value="0"><input type="hidden" id="einnahmenText" value=""></div>
 </section>
@@ -360,13 +367,13 @@ dialog.feier::backdrop{background:rgba(0,0,0,.45)}
 <div class="karte">
 <div class="zeile"><label for="vereinscode">Vereinscode</label><input id="vereinscode" type="password" autocomplete="off" placeholder="Erforderlich" enterkeyhint="send" data-immer></div>
 </div>
-<p class="fussnote">PDF und JSON werden automatisch erstellt und in der Dropbox des Kassenwarts gespeichert.</p>
+<p class="fussnote">PDF und JSON werden automatisch erstellt und in der Dropbox des Kassenwarts gespeichert. Mit dem Code <b>TVB</b> wird nur die Verbindung getestet – dabei wird nichts gespeichert.</p>
 <button type="button" class="knopf gefuellt" id="sendenButton" data-immer onclick="abrechnungSenden()" style="margin-top:16px"><span class="spinner" aria-hidden="true"></span><span class="knopfText">Abrechnung übermitteln</span></button>
 <p class="status" id="sendeStatus" role="status" aria-live="polite">Noch nicht übermittelt</p>
 <button type="button" class="knopf getoent" id="neuNachSenden" data-immer onclick="zuruecksetzen()" style="margin-top:14px" hidden>Neue Abrechnung beginnen</button>
 
 </main>
-<footer>Turnverein Birkenfeld · Abteilung Handball · Saison <span data-saison>2026/2027</span> · Version <span data-app-version>6.2</span></footer>
+<footer>Turnverein Birkenfeld · Abteilung Handball · Saison <span data-saison>2026/2027</span> · Version <span data-app-version>6.3</span></footer>
 
 <div id="toast" role="status" aria-live="polite" hidden><span class="punkt" aria-hidden="true"></span><span id="toastText"></span></div>
 
@@ -378,10 +385,11 @@ dialog.feier::backdrop{background:rgba(0,0,0,.45)}
 <h2 id="erfolgTitel">Übermittlung erfolgreich</h2>
 <p id="erfolgText">PDF und JSON sind in Dropbox bestätigt gespeichert.</p>
 <p class="vorgang" id="erfolgVorgang"></p>
+<ul class="testSchritte" id="testSchritte" hidden></ul>
 </div>
 <div class="alertKnoepfe gestapelt">
 <button type="button" class="fett" autofocus onclick="erfolgSchliessen()">Fertig</button>
-<button type="button" onclick="erfolgSchliessen();zuruecksetzen()">Neue Abrechnung beginnen</button>
+<button type="button" id="erfolgNeu" onclick="erfolgSchliessen();zuruecksetzen()">Neue Abrechnung beginnen</button>
 </div>
 </div>
 </dialog>
@@ -410,9 +418,9 @@ dialog.feier::backdrop{background:rgba(0,0,0,.45)}
 <input id="jsonDatei" type="file" accept=".json,application/json" hidden onchange="jsonDateiLaden()" aria-label="Offene JSON auswählen">
 </dialog>
 
-<script src="/assets/ablauf.js?v=6.2"></script>
-<script src="/assets/kasse.js?v=6.2"></script>
-<script src="/assets/feier.js?v=6.2"></script>
+<script src="/assets/ablauf.js?v=6.3"></script>
+<script src="/assets/kasse.js?v=6.3"></script>
+<script src="/assets/feier.js?v=6.3"></script>
 <script>
 const aktuelleArtikel=[
 ["Bier/Radler/Alkoholfrei – 20er Kasten",16],
@@ -471,7 +479,9 @@ function fehlerLoeschen(){
  document.querySelectorAll('.ungueltig').forEach(el=>el.classList.remove('ungueltig'));
 }
 // Zeigt eine Meldung direkt unter dem betroffenen Bereich und scrollt dorthin.
+let stillPruefen=false;
 function feldFehler(el,text){
+ if(stillPruefen)return false;
  fehlerLoeschen();
  const zeile=el.closest('.zeile');if(zeile)zeile.classList.add('ungueltig');
  const anker=el.closest('.karte')||el.closest('.segBlock')||el;
@@ -511,17 +521,32 @@ $('vereinscode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDef
 function onlineAnzeigen(){$('offlineBanner').hidden=navigator.onLine!==false;}
 addEventListener('online',onlineAnzeigen);addEventListener('offline',onlineAnzeigen);onlineAnzeigen();
 
-function erfolgZeigen(offen,id){
+const SYMBOLE={
+ komplett:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="haken" d="m5.5 12.5 4.2 4.2 8.8-9.2"/></svg>',
+ offen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+ test:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5a14 14 0 0 1 19 0M5.8 13a9 9 0 0 1 12.4 0M9.2 16.4a4 4 0 0 1 5.6 0"/><circle cx="12" cy="19.6" r="1" fill="currentColor"/></svg>'
+};
+// art: 'komplett' (Feuerwerk), 'offen' (Konfetti) oder 'test' (Konfetti, nichts gespeichert)
+function erfolgZeigen(art,id,schritte=[]){
  const sym=$('erfolgSymbol');
- sym.className='erfolgSymbol'+(offen?' offen':'');
- sym.innerHTML=offen
-  ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
-  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="haken" d="m5.5 12.5 4.2 4.2 8.8-9.2"/></svg>';
- $('erfolgTitel').textContent=offen?'Vorläufig übermittelt':'Abrechnung komplett';
- $('erfolgText').textContent=offen?'Der vorläufige Beleg und die offene JSON sind gespeichert. Der Kassierer muss die Kassenzählung noch ergänzen. Die Abrechnung ist noch nicht komplett.':'PDF und JSON wurden mit dem Zusatz _komplett in Dropbox gespeichert und geprüft.';
- $('erfolgVorgang').textContent='Vorgang '+id;
+ sym.className='erfolgSymbol '+art;sym.innerHTML=SYMBOLE[art];
+ $('erfolgTitel').textContent={komplett:'Abrechnung komplett',offen:'Vorläufig übermittelt',test:'Verbindungstest erfolgreich'}[art];
+ $('erfolgText').textContent={
+  komplett:'PDF und JSON wurden mit dem Zusatz _komplett in Dropbox gespeichert und geprüft.',
+  offen:'Der vorläufige Beleg und die offene JSON sind gespeichert. Der Kassierer muss die Kassenzählung noch ergänzen. Die Abrechnung ist noch nicht komplett.',
+  test:'Server und Dropbox sind erreichbar. Es wurde nichts gespeichert. Für die echte Übermittlung den richtigen Vereinscode eingeben.'}[art];
+ $('erfolgVorgang').textContent=art==='test'?'Testlauf – keine Abrechnung übermittelt':'Vorgang '+id;
+ const liste=$('testSchritte');liste.replaceChildren();liste.hidden=!schritte.length;
+ for(const s of schritte){
+  const li=document.createElement('li');li.className=s.status;
+  const m=document.createElement('span');m.className='m';m.textContent={ok:'✓',warnung:'!',fehler:'✕'}[s.status]||'–';
+  const t=document.createElement('span');t.textContent=s.name;
+  if(s.hinweis){const k=document.createElement('small');k.textContent=s.hinweis;t.append(k);}
+  li.append(m,t);liste.append(li);
+ }
+ $('erfolgNeu').hidden=art==='test';
  $('erfolgDialog').showModal();
- requestAnimationFrame(()=>TVBFeier.feiern($('feierCanvas'),offen?'konfetti':'feuerwerk'));
+ requestAnimationFrame(()=>TVBFeier.feiern($('feierCanvas'),art==='komplett'?'feuerwerk':'konfetti'));
 }
 function erfolgSchliessen(){TVBFeier.feierStoppen($('feierCanvas'));$('erfolgDialog').close();}
 $('erfolgDialog').addEventListener('close',()=>TVBFeier.feierStoppen($('feierCanvas')));
@@ -695,11 +720,30 @@ function kassenAuswertungAktualisieren(getraenke,sonstige){
  if(a.verkaufCent<0)hints.push('Die rechnerischen Verkaufseinnahmen sind negativ. Bitte Zählung und Ausgaben prüfen.');
  $('kassenWarnung').textContent=hints.join(' ');
 }
+// Scheine und Münzen: gleiche Plus/Minus-Bedienung wie bei den Waren, Zahl auch direkt eingebbar.
+const scheinSymbol='<svg viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="9" width="26" height="15" rx="2"/><circle cx="15" cy="16.5" r="3.6"/><path d="M6 13v7M24 13v7"/></svg>';
+const muenzSymbol='<svg viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="15" cy="16" r="10"/><circle cx="15" cy="16" r="6.5"/></svg>';
+function stueckAnzahl(i){const n=Math.floor(Number($('stueck'+i).value));return Number.isFinite(n)&&n>0?n:0;}
+function stueckAendern(i,delta){
+ const el=$('stueck'+i);if(el.disabled)return;
+ const n=Math.min(100000,Math.max(0,stueckAnzahl(i)+delta));el.value=n||'';berechnen();
+}
+function stueckSummenZeigen(){
+ TVBKasse.STUECKELUNG.forEach((wert,i)=>{
+  const n=stueckAnzahl(i);
+  $('stueckInfo'+i).textContent=n?n+' × '+euro(wert/100)+' = '+euro(n*wert/100):(wert>=500?'Schein':'Münze');
+  $('stueck'+i).closest('.ware').classList.toggle('hatMenge',n>0);
+ });
+}
 TVBKasse.STUECKELUNG.forEach((wert,i)=>{
- const row=document.createElement('div');row.className='zeile';
- const label=document.createElement('label');label.htmlFor='stueck'+i;label.textContent=euro(wert/100)+(wert>=500?' Schein':' Münze');
- const input=document.createElement('input');input.id='stueck'+i;input.type='number';input.min='0';input.max='100000';input.step='1';input.inputMode='numeric';input.placeholder='Anzahl';
- input.addEventListener('input',berechnen);row.append(label,input);$('stueckelungFelder').append(row);
+ const name=euro(wert/100),art=wert>=500?'Schein':'Münze';
+ const row=document.createElement('div');row.className='zeile ware geld';
+ row.innerHTML=`<span class="wareIcon">${wert>=500?scheinSymbol:muenzSymbol}</span>
+<div><label class="wareName" for="stueck${i}">${name}</label><span class="wareInfo" id="stueckInfo${i}">${art}</span></div>
+<div class="stepper"><button type="button" class="schritt" data-zaehl aria-label="${name} ${art} verringern" onclick="stueckAendern(${i},-1)">−</button><input id="stueck${i}" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="0" aria-label="Anzahl ${name} ${art}"><button type="button" class="schritt" data-zaehl aria-label="${name} ${art} erhöhen" onclick="stueckAendern(${i},1)">+</button></div>`;
+ const input=row.querySelector('input');
+ input.addEventListener('input',berechnen);input.addEventListener('focus',()=>input.select());
+ $('stueckelungFelder').append(row);
 });
 $('zaehlVerantwortung').addEventListener('change',()=>{zustaendigkeitAnzeigen();berechnen();});
 ['kassenbestand','sonstigeEinnahmen','einnahmenText'].forEach(id=>$(id).addEventListener('input',berechnen));
@@ -713,6 +757,7 @@ $("ausgabenSumme").textContent=euro(sonstige);
 $("sum1").textContent=euro(getraenke);
 $("sum2").textContent=euro(sonstige);
 $("gesamt").textContent=euro(getraenke+sonstige);
+stueckSummenZeigen();
 kassenAuswertungAktualisieren(getraenke,sonstige);
 segSync();
 speichern();
@@ -849,7 +894,7 @@ laden();renderWaren();renderAusgaben();berechnen();lockForm(false);
 function lockForm(locked) {
   document.querySelectorAll("main input,main select,main textarea,main button").forEach(el=>{
     if(el.closest('.segmented') || el.hasAttribute('data-immer')) return;
-    const countInput=['kassenbestand','zaehlmodus'].includes(el.id)||el.id.startsWith('stueck');
+    const countInput=['kassenbestand','zaehlmodus'].includes(el.id)||el.id.startsWith('stueck')||el.hasAttribute('data-zaehl');
     el.disabled=locked||!!(importKontext&&!countInput);
   });
   segSync();
@@ -890,9 +935,43 @@ async function abrechnungSenden() {
     });
   } finally {sending=false;}
 }
+// Vereinscode „TVB“ (genau so geschrieben): nur Verbindungstest, es wird nichts gespeichert
+// und kein Übermittlungsversuch angelegt.
+const TESTCODE='TVB';
+async function verbindungstest(){
+  const button=$("sendenButton"), status=$("sendeStatus");
+  const vorher=button.querySelector('.knopfText').textContent;
+  fehlerLoeschen();
+  if(navigator.onLine===false){status.textContent="Verbindungstest: keine Internetverbindung.";toast('Keine Internetverbindung.','fehler');return;}
+  // Vollständige Formulare werden zusätzlich als PDF-Probelauf geprüft – ohne Fehlermeldungen am Feld.
+  let abrechnung;
+  stillPruefen=true;try{if(validieren())abrechnung=storedSubmission?.abrechnung||daten();}finally{stillPruefen=false;}
+  button.disabled=true;sendeKnopf("Verbindung wird getestet …",true);
+  status.textContent="Testlauf: Server und Dropbox werden geprüft. Es wird nichts gespeichert.";
+  try{
+    const response=await fetch("/api/verbindungstest",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({vereinscode:TESTCODE,id:crypto.randomUUID(),abrechnung}),signal:AbortSignal.timeout(60000)});
+    let result;
+    try{result=await response.json();}catch{throw Error("Der Server antwortet nicht wie erwartet. Ist Version 6.3 schon veröffentlicht?");}
+    const schritte=Array.isArray(result.schritte)?result.schritte:[];
+    if(!response.ok||!result.ok||result.gespeichert!==false){
+      const liste=schritte.map(s=>({ok:'✓',warnung:'!',fehler:'✕'}[s.status]||'–')+' '+s.name+(s.hinweis?' – '+s.hinweis:'')).join('\n');
+      throw Error((result.error||"Verbindungstest fehlgeschlagen.")+(liste?'\n'+liste:''));
+    }
+    status.textContent="Verbindungstest erfolgreich – es wurde nichts gespeichert.";
+    $("vereinscode").value="";
+    erfolgZeigen('test',null,schritte);
+  }catch(error){
+    status.textContent="Verbindungstest fehlgeschlagen: "+error.message;
+    toast('Verbindungstest fehlgeschlagen.','fehler');
+  }finally{
+    button.disabled=storedSubmission?.state==="sent";sendeKnopf(vorher);
+  }
+}
 async function sendSubmission() {
   const button=$("sendenButton"), status=$("sendeStatus");
   let record;
+  if($("vereinscode").value.trim()===TESTCODE){await verbindungstest();return;}
   try {
     record=JSON.parse(localStorage.getItem(sendKey)||"null");
     if(record?.state==="sent") {restoreSubmission(record);return;}
@@ -939,7 +1018,7 @@ async function sendSubmission() {
       $("vereinscode").value="";
       const offen=result.abrechnungsstatus==='offen';
       status.textContent=(offen?'Vorläufiger Beleg und offene JSON erfolgreich übermittelt. Der Kassierer soll noch zählen. Vorgang: ':'Komplette Abrechnung: PDF und JSON erfolgreich in Dropbox bestätigt. Vorgang: ')+record.id;
-      erfolgZeigen(offen,record.id);
+      erfolgZeigen(offen?'offen':'komplett',record.id);
     } catch(error) {
       status.textContent="Nicht als erfolgreich bestätigt: "+error.message+
         (storedSubmission ? " Bitte dieselbe Abrechnung erneut übermitteln. Vorgang: "+record.id : " Bitte Eingaben korrigieren.");

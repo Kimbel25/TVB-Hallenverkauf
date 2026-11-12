@@ -1,4 +1,4 @@
-# TVB Hallenverkauf – Version 6.2
+# TVB Hallenverkauf – Version 6.3
 
 Turnverein Birkenfeld · Abteilung Handball · Saison 2026/2027
 
@@ -20,7 +20,7 @@ Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzuric
 
 ## Manuell aktualisieren
 
-1. TVB-Hallenverkauf-V6.2.zip entpacken.
+1. TVB-Hallenverkauf-V6.3.zip entpacken.
 2. Den gesamten Inhalt des entpackten Ordners im GitHub-Repository
    Kimbel25/TVB-Hallenverkauf auf oberster Ebene hochladen. Alle mitgelieferten
    Dateien ersetzen bzw. hinzufügen und gemeinsam committen. Nicht die ZIP oder
@@ -32,6 +32,21 @@ Für Preview-Deployments wäre das neue Secret dort zusätzlich separat einzuric
    für den neuen Ablauf „Neue Abrechnung“ wählen.
 5. Beide nachfolgenden Abläufe mit Testdaten prüfen, einschließlich PDF und JSON
    in Dropbox. Das Paket wurde lokal geprüft; die echte Veröffentlichung erfolgt manuell.
+
+## Neu in Version 6.3
+
+- Scheine und Münzen werden wie Flaschen und Kisten mit − und + gezählt; die Anzahl
+  kann auch direkt eingetippt werden. Je Sorte steht die Teilsumme (z. B. 3 × 50,00 € = 150,00 €).
+- Verbindungstest: Als Vereinscode genau TVB (Großbuchstaben) eingeben und
+  „Abrechnung übermitteln“ tippen. Geprüft werden Server, Cloudflare-Einstellungen,
+  Dropbox-Anmeldung und der lesende Zugriff auf den Ordner „Abrechnungen“. Ist das
+  Formular vollständig, wird zusätzlich ein Probe-PDF erzeugt und sofort verworfen.
+  Es wird NICHTS in Dropbox gespeichert, kein Vorgang angelegt und das Formular nicht
+  gesperrt. Bei Erfolg gibt es Konfetti und eine Liste der geprüften Schritte.
+  Danach wird das Codefeld geleert; für die echte Übermittlung den richtigen Vereinscode eingeben.
+- Wichtig: Der echte Vereinscode (Secret TVB_VEREINSCODE) darf nicht „TVB“ lauten.
+  Der Test meldet diese Kollision als Warnung.
+- Neuer Serverendpunkt functions/api/verbindungstest.js; keine neuen Secrets nötig.
 
 ## Neu in Version 6.2 (nur Oberfläche)
 
@@ -192,7 +207,7 @@ Die vorhandenen iPhone-Home-Icons bleiben erhalten.
 
 ## Prüfstand
 
-34 lokale Funktionstests: alte Versionen, Preisprüfung, Spenden, Rundungen, Fehlbeträge,
+37 lokale Funktionstests (seit 6.3 inkl. Verbindungstest): alte Versionen, Preisprüfung, Spenden, Rundungen, Fehlbeträge,
 Stückelung, parallele Ordnernamen, Teilfehler/Wiederholung, geschützte PDF-Vorschau,
 signierter Import, manipulierte Vorlagen und zweistufiger Abschluss.
 Zusätzlich Browserprüfung der oberen Knöpfe, Passwortöffnung und fehlenden Einnahmenfelder

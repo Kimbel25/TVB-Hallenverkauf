@@ -1,7 +1,7 @@
 # TVB Hallenverkauf – vollständige Projekt- und Übergabedokumentation
 
 **Dokumentationsstand:** 12. November 2026  
-**Zuletzt hier erstellte Anwendungsversion:** 6.2 (Oberfläche), Datenformat 6.1, Paketversion `6.2.0`  
+**Zuletzt hier erstellte Anwendungsversion:** 6.3, Datenformat 6.1, Paketversion `6.3.0`  
 **Verein:** Turnverein Birkenfeld · Abteilung Handball  
 **Saison:** 2026/2027
 
@@ -147,10 +147,14 @@ Für Kompatibilität können die technischen Felder `sonstigeEinnahmen: 0` und `
 
 Bei älteren importierten Abrechnungen bleiben bereits enthaltene Einnahmen und deren ursprüngliche Rechnung erhalten. Die App zeigt vorhandene positive Werte als Hinweis auf den Altbeleg an, ohne sie zur Bearbeitung freizugeben.
 
+### 3.9 Verbindungstest, seit 6.3
+
+Vereinscode exakt `TVB` → statt der Übermittlung läuft ein Verbindungstest. Der Browser legt keinen Übermittlungsversuch an (kein Eintrag `tvb_submission_v41`), sperrt das Formular nicht und verwendet eine Wegwerf-ID. Der Server (`/api/verbindungstest`) prüft nacheinander: Server erreichbar, Serverkonfiguration (Warnung, falls der echte Vereinscode selbst „TVB“ ist), Dropbox-Anmeldung per Refresh-Token, lesender Zugriff auf `/Abrechnungen` (fehlender Ordner ist kein Fehler; fehlendes Leserecht nur Warnung) und – wenn das Formular lokal vollständig gültig ist – Validierung plus Probe-PDF, das verworfen wird. Antwort enthält immer `test:true, gespeichert:false`; der Browser zeigt nur dann Erfolg und Konfetti. Ein Kassierer-Passwort wird dabei nicht übertragen. Die echte Übermittlung mit Code „TVB“ bleibt am Server abgelehnt, solange der echte Vereinscode anders lautet.
+
 ### 3.8 Oberfläche nach Apple-Richtlinien, seit 6.2
 
 - Gruppierte Listen (Inset Grouped), Systemschrift, Tippflächen mindestens 44 pt, Hell- und Dunkelmodus über `prefers-color-scheme`, iPhone-Sicherheitsränder über `env(safe-area-inset-*)`.
-- Mengen über Stepper (− Zahl +); Zeilen mit Menge werden in Vereinsrot hervorgehoben.
+- Mengen über Stepper (− Zahl +); Zeilen mit Menge werden in Vereinsrot hervorgehoben. Seit 6.3 auch für Scheine und Münzen, mit Teilsumme je Sorte; die Stepper-Knöpfe (`data-zaehl`) bleiben beim Kassierer-Import bedienbar.
 - Segmentauswahl für Zählzuständigkeit und Zählart. Die ursprünglichen `select`-Felder `zaehlVerantwortung` und `zaehlmodus` bleiben als unsichtbare Datenquelle bestehen (und erscheinen im Druck).
 - Quittungsbestätigung als Schalter.
 - Ein einziger roter Hauptknopf „Abrechnung übermitteln“; PDF-Vorschau als zurückhaltender Knopf.
@@ -453,6 +457,7 @@ Die Anwendung ist eine statische HTML-/JavaScript-Oberfläche mit Cloudflare Pag
 | `functions/api/preview.js` | Geschützte bzw. vorläufige PDF-Vorschau ohne Dropbox-Schreibvorgang |
 | `functions/api/kassierer.js` | Prüfung des Kassierer-Zugangs |
 | `functions/api/import.js` | Prüfung offener signierter JSON-Dateien |
+| `functions/api/verbindungstest.js` | Verbindungstest mit Testcode „TVB“: prüft Server, Secrets, Dropbox-Anmeldung, lesenden Zugriff (`files/get_metadata`) und optional die PDF-Erzeugung; schreibt nie in Dropbox |
 | `functions/api/health.js` | Status- und Konfigurationsindikatoren ohne Secret-Werte |
 | `functions/api/dropbox/*` | Historische Einrichtungsendpunkte, aktuell deaktiviert |
 | `scripts/build.mjs` | Statischen Ordner `public` erzeugen und gemeinsame Kassenlogik für Browser bereitstellen |
@@ -640,6 +645,7 @@ Die Tabelle fasst die hier dokumentierten Entwicklungsschritte zusammen. Maßgeb
 | 6.0 | Wareneinsatz plus Getränke ohne neues Pfand; Hallendienst oder spätere Kassierer-Zählung; keine 500-/200-Euro-Scheine; geschützte Auswertung; signierter offener JSON-Import; zweistufiger Abschluss und `_komplett`; fette Kassensumme, namentliche gleiche Aufteilung bei zwei Teams. |
 | 6.1 | Neue Spenden-/Bareinnahmenerfassung entfällt; JSON-Laden und Neue Abrechnung zusätzlich oben; Passwortfeld für Import oben; Bezeichnung „Kassierer soll zählen“; alte Vorlagen bleiben kompatibel. |
 | 6.2 | Reines Oberflächen-Update, Datenformat bleibt 6.1: Apple-Gestaltung mit Dunkelmodus, Menü „⋯“ mit Kassierer-Sheet, ein Hauptknopf, Konfetti/Feuerwerk nach Erfolg, Feldfehler statt Popups, Lade-Kreisel, Offline-Hinweis, zentrale Versionskonstanten. |
+| 6.3 | Scheine/Münzen mit Plus-/Minus-Stepper und Teilsummen; Verbindungstest mit Vereinscode „TVB“ über `/api/verbindungstest` (Server, Konfiguration, Dropbox-Anmeldung, lesender Ablagezugriff, optional Probe-PDF) ohne jede Speicherung, mit Konfetti; 37 Tests. |
 
 ## 18. Prüfungen und ihr Aussageumfang
 

@@ -1,6 +1,6 @@
 // Zentrale Versionsangaben. Die App-Version ist nur Anzeige; das Datenformat bestimmt
 // Server-Prüfung, PDF-Layout und Ablageordner und bleibt bei reinen Oberflächen-Updates gleich.
-const APP_VERSION='6.2';
+const APP_VERSION='6.3';
 const DATENFORMAT='6.1';
 const NEUE_FORMATE=['6.0','6.1'];
 const ZAEHL_FORMATE=['5.0',...NEUE_FORMATE];

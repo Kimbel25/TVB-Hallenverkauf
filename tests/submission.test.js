@@ -5,6 +5,7 @@ import {validieren, ARTIKEL} from '../lib/abrechnung.js';
 import {createPdf} from '../lib/pdf.js';
 import {Dropbox,contentHash} from '../lib/dropbox.js';
 import {onRequestPost} from '../functions/api/submit.js';
+import {onRequestPost as verbindungstestPost} from '../functions/api/verbindungstest.js';
 const font = await readFile(new URL('../assets/fonts/NotoSans.deflate',import.meta.url));
 export function fixture(id='00000000-0000-4000-8000-000000000001') {
   return {id,vereinscode:'test-only',abrechnung:{datum:'2026-11-03',mannschaft:'Damen 1',person:'Erika Müller',
@@ -21,6 +22,11 @@ class FakeDropbox {
       if(this.folderFile) return jsonResponse({error:{'.tag':'path',path:{'.tag':'conflict',conflict:{'.tag':'file'}}}},409);
       if(this.folders.has(path)) return jsonResponse({error:{'.tag':'path',path:{'.tag':'conflict',conflict:{'.tag':'folder'}}}},409);
       this.folders.add(path);return jsonResponse({metadata:{path_lower:path.toLowerCase()}});
+    }
+    if(url.endsWith('/files/get_metadata')) {
+      this.metaCalls=(this.metaCalls||0)+1;
+      if(this.ablageFehlt) return jsonResponse({error:{'.tag':'path',path:{'.tag':'not_found'}}},409);
+      return jsonResponse({'.tag':'folder',name:'Abrechnungen'});
     }
     assert.ok(url.endsWith('/files/upload'));
     const arg=JSON.parse(options.headers['Dropbox-API-Arg']);
@@ -339,4 +345,37 @@ test('6.1 removes donations without changing signed 6.0 records and completes in
  assert.ok(fake.files.has(openPath.replace(/\.json$/,'_komplett.pdf')));assert.equal((await send(final,{env:cashAuth})).status,200);
  const oldLoaded=await admin({kassiererPasswort:'unit-cashier',beleg:raw},true);assert.equal(oldLoaded.status,200);assert.equal(oldLoaded.data.abrechnung.kasse.sonstigeEinnahmen,10);
  assert.deepEqual(await createPdf(validieren(old),font),oldPdf);
+}));
+
+async function verbindungstest(input, overrides={}) {
+  const request=new Request('https://example.test/api/verbindungstest',{method:'POST',headers:{Origin:'https://example.test','Content-Type':'application/json',...overrides.headers},body:JSON.stringify(input)});
+  const response=await verbindungstestPost({request,env:{...env,...overrides.env}});
+  return {status:response.status,data:await response.json()};
+}
+test('Verbindungstest mit TVB prüft Server, Dropbox und PDF, speichert aber nichts',async()=>withDropbox(async fake=>{
+  const input=fixture('00000000-0000-4000-8000-0000000000aa');
+  const r=await verbindungstest({vereinscode:'TVB',id:input.id,abrechnung:input.abrechnung});
+  assert.equal(r.status,200);assert.equal(r.data.ok,true);assert.equal(r.data.test,true);assert.equal(r.data.gespeichert,false);
+  assert.deepEqual(r.data.schritte.map(s=>s.status),['ok','ok','ok','ok','ok']);
+  assert.equal(fake.files.size,0);assert.equal(fake.folders.size,0);assert.equal(fake.calls.length,0);assert.equal(fake.metaCalls,1);
+  fake.ablageFehlt=true;
+  const ohneFormular=await verbindungstest({vereinscode:'TVB'});
+  assert.equal(ohneFormular.data.ok,true);assert.equal(ohneFormular.data.schritte.at(-1).status,'übersprungen');
+  assert.match(ohneFormular.data.schritte[3].hinweis,/ersten echten Senden/);
+  assert.equal(fake.files.size,0);assert.equal(fake.folders.size,0);
+}));
+test('Verbindungstest nur mit exakt TVB; echte Übermittlung mit TVB bleibt abgelehnt',async()=>withDropbox(async fake=>{
+  for(const code of ['tvb','TVB ','test-only',undefined]){
+    const r=await verbindungstest({vereinscode:code});assert.equal(r.status,403);assert.equal(r.data.ok,false);
+  }
+  assert.equal(fake.metaCalls,undefined);
+  const real=fixture();real.vereinscode='TVB';const s=await send(real);
+  assert.equal(s.status,403);assert.equal(fake.files.size,0);
+}));
+test('Verbindungstest meldet fehlende Secrets und Kollision des echten Vereinscodes',async()=>withDropbox(async fake=>{
+  const ohne=await verbindungstest({vereinscode:'TVB'},{env:{DROPBOX_REFRESH_TOKEN:''}});
+  assert.equal(ohne.status,503);assert.equal(ohne.data.schritte.at(-1).status,'fehler');
+  const kollision=await verbindungstest({vereinscode:'TVB'},{env:{TVB_VEREINSCODE:'TVB'}});
+  assert.equal(kollision.data.ok,true);assert.equal(kollision.data.schritte[1].status,'warnung');
+  assert.equal(fake.files.size,0);
 }));
